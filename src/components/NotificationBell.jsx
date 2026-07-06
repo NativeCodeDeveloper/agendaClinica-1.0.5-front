@@ -33,15 +33,25 @@ export default function NotificationBell() {
     const calcPos = useCallback(() => {
         if (!btnRef.current) return;
         if (isMobile()) { setPos({ mobile: true, maxH: window.innerHeight * 0.75 }); return; }
-        const r    = btnRef.current.getBoundingClientRect();
-        const w    = 320;
-        const gap  = 8;
-        // Preferir a la derecha; si no cabe, ir a la izquierda
+        const r   = btnRef.current.getBoundingClientRect();
+        const w   = 320;
+        const gap = 8;
+
+        // Horizontal: derecha si cabe, si no izquierda
         const leftRight = r.right + gap;
-        const leftLeft  = r.left - w - gap;
-        const left = leftRight + w + 8 <= window.innerWidth ? leftRight : Math.max(8, leftLeft);
-        const maxH = Math.max(200, window.innerHeight - r.top - 24);
-        setPos({ mobile: false, top: r.top, left, maxH });
+        const left = leftRight + w + 8 <= window.innerWidth
+            ? leftRight
+            : Math.max(8, r.left - w - gap);
+
+        // Vertical: si el botón está en la mitad inferior, el panel sube
+        const nearBottom = r.top > window.innerHeight / 2;
+        if (nearBottom) {
+            const maxH = Math.min(420, r.bottom - 16);
+            setPos({ mobile: false, bottom: window.innerHeight - r.bottom, left, maxH });
+        } else {
+            const maxH = Math.max(200, window.innerHeight - r.top - 16);
+            setPos({ mobile: false, top: r.top, left, maxH });
+        }
     }, []);
 
     function toggle() { calcPos(); setOpen(o => !o); }
@@ -72,7 +82,9 @@ export default function NotificationBell() {
 
     const panelStyle = pos.mobile
         ? { position: 'fixed', bottom: 0, left: 0, right: 0, width: '100%', maxHeight: pos.maxH, zIndex: 9999, borderRadius: '20px 20px 0 0' }
-        : { position: 'fixed', top: pos.top, left: pos.left, width: 320, zIndex: 9999 };
+        : pos.bottom !== undefined
+            ? { position: 'fixed', bottom: pos.bottom, left: pos.left, width: 320, zIndex: 9999 }
+            : { position: 'fixed', top: pos.top, left: pos.left, width: 320, zIndex: 9999 };
 
     const panel = open && typeof document !== 'undefined' && createPortal(
         <>
