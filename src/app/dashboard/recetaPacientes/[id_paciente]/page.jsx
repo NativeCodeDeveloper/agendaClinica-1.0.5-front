@@ -299,9 +299,9 @@ export default function ReecetasPacientes() {
                 doc.roundedRect(margin, y, anchoContenido, altoBloque, 1.8, 1.8);
 
                 doc.setFont("helvetica", "normal");
-                doc.setFontSize(10.5);
+                doc.setFontSize(9);
                 doc.setTextColor(15, 23, 42);
-                doc.text(bloque, margin + 5, y + 7, {
+                doc.text(bloque, margin + 5, y + 6, {
                     maxWidth: anchoContenido - 10,
                     lineHeightFactor: 1.5
                 });
