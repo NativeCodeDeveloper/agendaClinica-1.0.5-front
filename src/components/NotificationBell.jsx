@@ -28,15 +28,20 @@ export default function NotificationBell() {
     const btnRef = useRef(null);
     const { notifs, permiso, pedirPermiso, marcarLeida, marcarTodasLeidas } = useNotificaciones();
 
+    const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 640;
+
     const calcPos = useCallback(() => {
         if (!btnRef.current) return;
-        const r   = btnRef.current.getBoundingClientRect();
-        const gap = 8;
-        const w   = 320;
-        const left = r.right + gap;
-        const safeLeft = Math.min(left, window.innerWidth - w - 8);
+        if (isMobile()) { setPos({ mobile: true, maxH: window.innerHeight * 0.75 }); return; }
+        const r    = btnRef.current.getBoundingClientRect();
+        const w    = 320;
+        const gap  = 8;
+        // Preferir a la derecha; si no cabe, ir a la izquierda
+        const leftRight = r.right + gap;
+        const leftLeft  = r.left - w - gap;
+        const left = leftRight + w + 8 <= window.innerWidth ? leftRight : Math.max(8, leftLeft);
         const maxH = Math.max(200, window.innerHeight - r.top - 24);
-        setPos({ top: r.top, left: safeLeft, maxH });
+        setPos({ mobile: false, top: r.top, left, maxH });
     }, []);
 
     function toggle() { calcPos(); setOpen(o => !o); }
@@ -65,12 +70,20 @@ export default function NotificationBell() {
         };
     }, [open, calcPos]);
 
+    const panelStyle = pos.mobile
+        ? { position: 'fixed', bottom: 0, left: 0, right: 0, width: '100%', maxHeight: pos.maxH, zIndex: 9999, borderRadius: '20px 20px 0 0' }
+        : { position: 'fixed', top: pos.top, left: pos.left, width: 320, zIndex: 9999 };
+
     const panel = open && typeof document !== 'undefined' && createPortal(
-        <div
-            id="ac-notif-panel"
-            style={{ position: 'fixed', top: pos.top, left: pos.left, width: 320, zIndex: 9999 }}
-            className="bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col overflow-hidden"
-        >
+        <>
+            {pos.mobile && (
+                <div className="fixed inset-0 bg-black/20 z-[9998]" onClick={() => setOpen(false)} />
+            )}
+            <div
+                id="ac-notif-panel"
+                style={panelStyle}
+                className="bg-white border border-slate-200 shadow-xl flex flex-col overflow-hidden"
+            >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
                 <div className="flex items-center gap-2">
@@ -116,7 +129,7 @@ export default function NotificationBell() {
             )}
 
             {/* Lista */}
-            <div className="overflow-y-auto" style={{ maxHeight: pos.maxH - 80 }}>
+            <div className="overflow-y-auto" style={{ maxHeight: (pos.maxH || 400) - 80 }}>
                 {notifs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-2">
                         <Bell size={22} className="text-slate-200" />
@@ -149,7 +162,8 @@ export default function NotificationBell() {
                     })
                 )}
             </div>
-        </div>,
+        </div>
+        </>,
         document.body
     );
 

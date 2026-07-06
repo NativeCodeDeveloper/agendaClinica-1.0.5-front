@@ -2069,6 +2069,76 @@ function CalendarioContent() {
 
                 {/* ── Grilla del calendario ── */}
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                    {currentView === "agenda" ? (
+                        /* ── Vista Lista personalizada (estilo agenda Apple) ── */
+                        <div className="overflow-y-auto" style={{ height: "calc(100vh - 240px)", minHeight: 520 }}>
+                            {(() => {
+                                const soloReservas = filteredEvents.filter(ev => ev.tipo === "reserva" && !ev._filtered);
+                                if (soloReservas.length === 0) return (
+                                    <div className="flex flex-col items-center justify-center h-64 gap-3 text-slate-400">
+                                        <svg className="w-10 h-10 opacity-25" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <p className="text-sm">Sin reservas para mostrar</p>
+                                    </div>
+                                );
+                                const grupos = soloReservas.reduce((acc, ev) => {
+                                    const key = format(ev.start, "yyyy-MM-dd");
+                                    if (!acc[key]) acc[key] = [];
+                                    acc[key].push(ev);
+                                    return acc;
+                                }, {});
+                                return Object.keys(grupos).sort().map(key => {
+                                    const fecha = new Date(key + "T00:00:00");
+                                    const labelFecha = format(fecha, "EEEE, d 'de' MMMM", { locale: es }).toUpperCase();
+                                    const evsDia = grupos[key].slice().sort((a, b) => a.start - b.start);
+                                    return (
+                                        <div key={key}>
+                                            <div className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm border-b border-slate-100 px-5 py-2.5">
+                                                <span className="text-[11px] font-bold tracking-widest text-slate-500">{labelFecha}</span>
+                                            </div>
+                                            <div className="divide-y divide-slate-50">
+                                                {evsDia.map(ev => {
+                                                    const paleta = obtenerPaletaEstadoReserva(ev.resource?.estadoReserva ?? "");
+                                                    const paciente = [ev.resource?.nombrePaciente, ev.resource?.apellidoPaciente].filter(Boolean).join(" ") || ev.title;
+                                                    const profesional = ev.resource?._nombreProfesional || "";
+                                                    const estado = ev.resource?.estadoReserva || "Reservada";
+                                                    return (
+                                                        <div key={ev.id_reserva}
+                                                            className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 cursor-pointer transition-colors group"
+                                                            onClick={() => {
+                                                                setMonthPopover(null);
+                                                                limpiarSeleccionTemporal();
+                                                                if (!ev?.id_reserva) return;
+                                                                setid_reserva(ev.id_reserva);
+                                                                seleccionarReservaEspecifica(ev.id_reserva);
+                                                                abrirPopupReservaExistente(ev);
+                                                            }}>
+                                                            {/* Hora */}
+                                                            <div className="w-[52px] shrink-0 text-right">
+                                                                <p className="text-[12px] font-semibold text-slate-700 leading-tight">{formatHoraCorta(ev.start)}</p>
+                                                                <p className="text-[10px] text-slate-400 leading-tight">{formatHoraCorta(ev.end)}</p>
+                                                            </div>
+                                                            {/* Barra color */}
+                                                            <div className="w-1 self-stretch rounded-full shrink-0 my-1" style={{ backgroundColor: paleta.accentColor }} />
+                                                            {/* Info */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[13px] font-semibold text-slate-800 truncate leading-snug">{paciente}</p>
+                                                                {profesional && <p className="text-[11px] text-slate-400 truncate mt-0.5">{profesional}</p>}
+                                                            </div>
+                                                            {/* Estado badge */}
+                                                            <span className="shrink-0 text-[10.5px] font-semibold px-2.5 py-1 rounded-full capitalize leading-none"
+                                                                style={{ backgroundColor: paleta.backgroundColor, color: paleta.color }}>
+                                                                {estado}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
+                    ) : (
                     <div
                         className="relative p-3 md:p-4"
                         style={{
@@ -2177,6 +2247,7 @@ function CalendarioContent() {
                             }}
                         />
                     </div>
+                    )}
                 </div>
 
 
