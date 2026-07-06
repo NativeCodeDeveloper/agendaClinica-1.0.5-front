@@ -1,5 +1,5 @@
 'use client'
-import React, {useState, useEffect} from "react";
+import {useState, useEffect, useMemo} from "react";
 import {
     Table,
     TableBody,
@@ -16,27 +16,29 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {SelectDinamic} from "@/Componentes/SelectDinamic";
 import {InputTextDinamic} from "@/Componentes/InputTextDinamic";
+import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
 
-
-
+const formatoCLP = new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+});
 
 export default function PresupuestoTratamiento() {
     const API = process.env.NEXT_PUBLIC_API_URL;
-    const EMPRESA_NOMBRE = process.env.NEXT_PUBLIC_EMPRESA_NOMBRE || "AgendaClinica";
+    const empresaNombre = useEmpresaNombre();
     const [listaServicios, setListaServicios] = useState([]);
     const [listaPresupuesto, setListaPresupuesto] = useState([]);
-    const [totalPresupuesto, setTotalPresupuesto] = useState(0);
     const [listaProfesionales, setListaProfesionales] = useState([]);
+
+    const totalPresupuesto = useMemo(
+        () => listaPresupuesto.reduce((sum, el) => sum + (el.valorProducto || 0), 0),
+        [listaPresupuesto]
+    );
     const [nombreProfesional, setNombreProfesional] = useState("");
     const [nombrePaciente, setNombrePaciente] = useState("");
     const [rutaPaciente, setRutaPaciente] = useState("");
-
-    const formatoCLP = new Intl.NumberFormat("es-CL", {
-        style: "currency",
-        currency: "CLP",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    });
 
     async function getProductosServicios() {
         try {
@@ -62,22 +64,11 @@ export default function PresupuestoTratamiento() {
 
 
     function generarPresupuesto(servicioCotizado) {
-        setListaPresupuesto(servicioCotizadoPrev => [...servicioCotizadoPrev, {...servicioCotizado, observacionCotizacion: ""}]);
-        let valorPresupuesto = servicioCotizado.valorProducto;
-        listaPresupuesto.forEach(element => {
-            valorPresupuesto += element.valorProducto;
-        })
-        setTotalPresupuesto(valorPresupuesto);
+        setListaPresupuesto(prev => [...prev, {...servicioCotizado, observacionCotizacion: ""}]);
     }
 
     function quitarDelPresupuesto(indexEliminar) {
-        setListaPresupuesto(prev => {
-            const nueva = prev.filter((_, i) => i !== indexEliminar);
-            let total = 0;
-            nueva.forEach(el => { total += el.valorProducto; });
-            setTotalPresupuesto(total);
-            return nueva;
-        });
+        setListaPresupuesto(prev => prev.filter((_, i) => i !== indexEliminar));
     }
 
     function actualizarObservacionPresupuesto(indexActualizar, observacionCotizacion) {
@@ -123,13 +114,17 @@ export default function PresupuestoTratamiento() {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         doc.setTextColor(...BLACK);
-        doc.text(EMPRESA_NOMBRE.toUpperCase(), margin, 14);
+        doc.text(empresaNombre.toUpperCase(), margin, 14);
 
-        // Subtítulo clínica
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
+        // Subtítulo: plataforma
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7.5);
         doc.setTextColor(...MID);
-        doc.text("Centro de Atención Clínica", margin, 21);
+        doc.text("AgendaClínica — Sistema de Gestión Clínica", margin, 20);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.text("Centro de Atención Clínica", margin, 25);
 
         // Tipo de documento — derecha, en caja gris
         doc.setFillColor(...BGMID);
@@ -289,7 +284,7 @@ export default function PresupuestoTratamiento() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(6.5);
         doc.setTextColor(...LIGHT);
-        doc.text(`${EMPRESA_NOMBRE}  ·  Documento generado por AgendaClinica`, margin, footerY);
+        doc.text(`${empresaNombre}  ·  Generado por AgendaClínica`, margin, footerY);
         doc.text(`Folio ${folio}  ·  Emisión: ${fechaEmision}`, rightX, footerY, { align: "right" });
 
         doc.save(`presupuesto-${(nombrePaciente || "paciente").toLowerCase().replace(/\s+/g, "-")}.pdf`);

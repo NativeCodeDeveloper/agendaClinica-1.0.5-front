@@ -1,15 +1,23 @@
 'use client'
 
-import React, {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import ToasterClient from "@/Componentes/ToasterClient";
 import ShadcnInput from "@/Componentes/shadcnInput2";
+import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
+
+const formatoCLP = new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+});
 
 export default function ExamenDocumento() {
     const API = process.env.NEXT_PUBLIC_API_URL;
-    const EMPRESA_NOMBRE = process.env.NEXT_PUBLIC_EMPRESA_NOMBRE || "AgendaClinica";
+    const empresaNombre = useEmpresaNombre();
 
     const [nombrePaciente, setNombrePaciente] = useState("");
     const [rutPaciente, setRutPaciente] = useState("");
@@ -18,13 +26,6 @@ export default function ExamenDocumento() {
     const [listaExamenes, setListaExamenes] = useState([]);
     const [listaExamenesSolicitados, setListaExamenesSolicitados] = useState([]);
     const [busquedaExamen, setBusquedaExamen] = useState("");
-
-    const formatoCLP = new Intl.NumberFormat("es-CL", {
-        style: "currency",
-        currency: "CLP",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    });
 
     async function seleccionarTodosExamenes() {
         try {
@@ -134,19 +135,25 @@ export default function ExamenDocumento() {
         doc.setLineWidth(0.4);
         doc.rect(margin, 14, rightX - margin, pageH - 28);
 
+        // ── Encabezado: nombre del centro médico ──
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         doc.setTextColor(25, 25, 25);
-        doc.text(EMPRESA_NOMBRE.toUpperCase(), contentLeft, 24);
+        doc.text(empresaNombre.toUpperCase(), contentLeft, 24);
+
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7.5);
+        doc.setTextColor(90, 90, 90);
+        doc.text("AgendaClínica — Sistema de Gestión Clínica", contentLeft, 29);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(90, 90, 90);
-        doc.text("Solicitud de examenes clinicos", contentLeft, 29);
+        doc.text("Solicitud de exámenes clínicos", contentLeft, 33);
 
         doc.setDrawColor(60, 60, 60);
         doc.setLineWidth(0.6);
-        doc.line(contentLeft, 34, contentRight, 34);
+        doc.line(contentLeft, 37, contentRight, 37);
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
@@ -179,7 +186,7 @@ export default function ExamenDocumento() {
         doc.setTextColor(25, 25, 25);
         doc.text(nombrePaciente.trim() || "-", contentLeft, y + 16);
         doc.text(rutPaciente.trim() || "-", contentLeft + 108, y + 16);
-        doc.text(nombreProfesional.trim() || "-", contentLeft, y + 27);
+        doc.text(doc.splitTextToSize(nombreProfesional.trim() || "-", contentWidth / 2), contentLeft, y + 27);
 
         y = 82;
 
@@ -266,7 +273,7 @@ export default function ExamenDocumento() {
         doc.line(contentLeft, footerY - 5, contentRight, footerY - 5);
         doc.setFontSize(7);
         doc.setTextColor(110, 110, 110);
-        doc.text("Documento generado desde AgendaClinica para solicitud interna o entrega al paciente.", contentLeft, footerY);
+        doc.text(`Documento generado desde AgendaClínica | ${empresaNombre} — Para solicitud interna o entrega al paciente.`, contentLeft, footerY);
         doc.text("Examenes clinicos", contentRight, footerY, {align: "right"});
 
         const nombrePacienteArchivo = `${nombrePaciente || "paciente"}`
