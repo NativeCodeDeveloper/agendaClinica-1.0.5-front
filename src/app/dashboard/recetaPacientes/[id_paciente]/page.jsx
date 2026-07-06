@@ -298,12 +298,12 @@ export default function ReecetasPacientes() {
                 doc.setLineWidth(0.35);
                 doc.roundedRect(margin, y, anchoContenido, altoBloque, 1.8, 1.8);
 
-                doc.setFont("times", "normal");
-                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10.5);
                 doc.setTextColor(15, 23, 42);
-                doc.text(bloque, margin + 5, y + 8, {
+                doc.text(bloque, margin + 5, y + 7, {
                     maxWidth: anchoContenido - 10,
-                    lineHeightFactor: 1.45
+                    lineHeightFactor: 1.5
                 });
 
                 indiceLinea += bloque.length;

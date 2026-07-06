@@ -308,7 +308,10 @@ export default function SidebarNav() {
           })}
       </nav>
 
-      <UserMenu extraActions={<NotificationBell />} />
+      <div className="px-3 pb-1">
+        <NotificationBell />
+      </div>
+      <UserMenu />
     </>
   );
 }
