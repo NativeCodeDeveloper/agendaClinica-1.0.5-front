@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getDashboardRoleFromUser, getDashboardRoleLabel } from "@/lib/dashboard-access";
 
-export default function UserMenu() {
+export default function UserMenu({ extraActions }) {
     const { user, isLoaded } = useUser();
     const { signOut } = useClerk();
     const [empresaNombre, setEmpresaNombre] = useState("");
@@ -97,6 +97,13 @@ export default function UserMenu() {
                             {roleLabel}
                         </p>
                     </div>
+
+                    {/* Acciones extra (ej: campana de notificaciones) */}
+                    {extraActions && (
+                        <span onClick={e => e.preventDefault()} className="shrink-0">
+                            {extraActions}
+                        </span>
+                    )}
 
                     {/* Chevron */}
                     <svg

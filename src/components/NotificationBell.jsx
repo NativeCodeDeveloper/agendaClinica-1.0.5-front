@@ -156,24 +156,17 @@ export default function NotificationBell() {
     return (
         <>
             <button ref={btnRef} onClick={toggle} title="Notificaciones"
-                className={`group w-full flex items-center gap-2.5 rounded-lg px-3 py-[7px] text-[12.5px] font-medium transition-all duration-150 relative ${
-                    open
-                        ? 'bg-[#F3F0FF] text-[#6E56CF]'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}>
-                <span className={`relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-150 ${
+                className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-150 ${
                     open
                         ? 'bg-[#EDE9FE] text-[#6E56CF]'
-                        : 'bg-slate-100/80 text-slate-400 group-hover:bg-slate-200/60 group-hover:text-slate-600'
+                        : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
                 }`}>
-                    <Bell size={13} strokeWidth={1.8} />
-                    {notifs.length > 0 && (
-                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#6E56CF] rounded-full flex items-center justify-center text-[8px] font-bold text-white leading-none">
-                            {notifs.length > 9 ? '9+' : notifs.length}
-                        </span>
-                    )}
-                </span>
-                <span className="leading-none">Notificaciones</span>
+                <Bell size={15} strokeWidth={1.8} />
+                {notifs.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#6E56CF] rounded-full flex items-center justify-center text-[8px] font-bold text-white leading-none">
+                        {notifs.length > 9 ? '9+' : notifs.length}
+                    </span>
+                )}
             </button>
             {panel}
         </>
