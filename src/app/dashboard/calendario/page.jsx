@@ -94,26 +94,52 @@ function CalendarioContent() {
                 background: rgba(168, 85, 247, 0.04) !important;
             }
             .rbc-today {
-                background: rgba(248, 250, 252, 0.5) !important;
+                background: rgba(110, 86, 207, 0.04) !important;
             }
             .rbc-current-time-indicator {
-                background-color: #7c3aed !important;
+                background-color: #6E56CF !important;
                 height: 2px !important;
+                z-index: 3 !important;
+            }
+            .rbc-current-time-indicator::before {
+                content: '';
+                position: absolute;
+                left: -4px;
+                top: -4px;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: #6E56CF;
             }
             .rbc-slot-selection {
-                background: rgba(124, 58, 237, 0.12) !important;
-                border: 1px solid rgba(124, 58, 237, 0.3) !important;
+                background: rgba(110, 86, 207, 0.10) !important;
+                border: 1px solid rgba(110, 86, 207, 0.35) !important;
                 border-radius: 12px !important;
             }
             .rbc-selected-cell {
-                background: rgba(124, 58, 237, 0.04) !important;
+                background: rgba(110, 86, 207, 0.04) !important;
             }
             .rbc-event,
             .rbc-background-event {
-                border-radius: 8px !important;
-                box-shadow: none !important;
+                border-radius: 10px !important;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.07) !important;
                 overflow: hidden !important;
                 border: none !important;
+            }
+            /* Número de día hoy en mes — círculo violeta */
+            .rbc-date-cell.rbc-now > a,
+            .rbc-date-cell.rbc-now > button,
+            .rbc-date-cell.rbc-now > span {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 26px !important;
+                height: 26px !important;
+                background: #6E56CF !important;
+                color: white !important;
+                border-radius: 50% !important;
+                font-weight: 700 !important;
+                font-size: 12px !important;
             }
             .rbc-background-event {
                 background-color: rgba(107, 114, 128, 0.08) !important;

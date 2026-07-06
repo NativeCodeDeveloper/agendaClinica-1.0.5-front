@@ -88,13 +88,11 @@ export function AppointmentCard({ event, currentView }) {
   const horaInicio = formatHora(event.start);
   const horaFin = formatHora(event.end);
 
-  // ── Vista MES: una sola línea compacta (el wrapper RBC ya tiene bg y border) ──
+  // ── Vista MES: dot de estado + nombre paciente ─────────────────────────────
   if (currentView === "month") {
     return (
-      <div className="flex w-full items-center gap-1 overflow-hidden h-full">
-        <span className="text-[10px] font-semibold tabular-nums leading-none flex-shrink-0" style={{ color: token.accent }}>
-          {horaInicio}
-        </span>
+      <div className="flex w-full items-center gap-1.5 overflow-hidden h-full px-0.5">
+        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: token.accent }} />
         <span className="truncate text-[11px] font-bold leading-none flex-1" style={{ color: token.text }}>
           {nombreCompleto || event.title}
         </span>
@@ -143,7 +141,7 @@ export function AppointmentCard({ event, currentView }) {
     return (
       <div
         className="flex h-full w-full items-center gap-1 px-1.5 overflow-hidden"
-        style={{ borderLeft: `3px solid ${token.accent}`, background: token.bg }}
+        style={{ borderLeft: `4px solid ${token.accent}`, background: token.bg }}
       >
         <span className="text-[10px] font-bold tabular-nums leading-none shrink-0" style={{ color: token.accent }}>
           {horaInicio}
@@ -161,7 +159,7 @@ export function AppointmentCard({ event, currentView }) {
       <div
         className="flex h-full w-full flex-col justify-start px-2 py-1 cursor-pointer overflow-hidden"
         style={{
-          borderLeft: `3px solid ${token.accent}`,
+          borderLeft: `4px solid ${token.accent}`,
           background: token.bg,
           boxShadow: `inset 0 0 0 1px ${token.border}`,
         }}
@@ -203,7 +201,7 @@ export function AppointmentCard({ event, currentView }) {
     <div
       className="flex h-full w-full flex-col justify-start px-2.5 py-1.5 cursor-pointer overflow-hidden"
       style={{
-        borderLeft: `3px solid ${token.accent}`,
+        borderLeft: `4px solid ${token.accent}`,
         background: token.bg,
         boxShadow: `inset 0 0 0 1px ${token.border}`,
       }}
