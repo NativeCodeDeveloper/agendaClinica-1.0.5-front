@@ -308,11 +308,10 @@ export default function SidebarNav() {
           })}
       </nav>
 
-      <div className="px-2 pb-1 border-t border-slate-100 pt-2 shrink-0">
+      <div className="flex items-center gap-2 px-3 pb-1">
         <NotificationBell />
+        <UserMenu />
       </div>
-
-      <UserMenu />
     </>
   );
 }
