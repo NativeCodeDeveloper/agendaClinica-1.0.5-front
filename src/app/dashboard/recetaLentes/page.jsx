@@ -1,12 +1,13 @@
 'use client'
 
-import {useMemo, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import jsPDF from "jspdf";
 import ToasterClient from "@/Componentes/ToasterClient";
 import {toast} from "react-hot-toast";
 import ShadcnInput from "@/Componentes/shadcnInput2";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
 import { useProfesionales } from "@/hooks/useProfesionales";
+import { buscarPacientePorRut } from "@/lib/buscarPaciente";
 import {
     Select,
     SelectContent,
@@ -89,7 +90,7 @@ function SectionTitle({eyebrow, title, description}) {
     );
 }
 
-function InputField({label, value, onChange, placeholder, className = "", type = "text"}) {
+function InputField({label, value, onChange, onBlur, placeholder, className = "", type = "text"}) {
     return (
         <div className={className}>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
@@ -97,6 +98,7 @@ function InputField({label, value, onChange, placeholder, className = "", type =
                 type={type}
                 value={value}
                 onChange={onChange}
+                onBlur={onBlur}
                 placeholder={placeholder}
                 className="w-full"
             />
@@ -142,6 +144,8 @@ export default function RecetaLentesPage() {
     const empresaNombre = useEmpresaNombre();
     const listaProfesionales = useProfesionales();
     const [formulario, setFormulario] = useState(emptyFormulario);
+    const [buscandoPaciente, setBuscandoPaciente] = useState(false);
+    const rutBuscadoRef = useRef("");
 
     const especialidadProfesional = useMemo(() => {
         const profesional = listaProfesionales.find(p => String(p.id_profesional) === String(formulario.idProfesional));
@@ -166,7 +170,30 @@ export default function RecetaLentesPage() {
         }));
     }
 
+    async function autocompletarPaciente() {
+        const rutConsultado = formulario.rutPaciente.trim();
+        if (!rutConsultado) return;
+        rutBuscadoRef.current = rutConsultado;
+        setBuscandoPaciente(true);
+        try {
+            const paciente = await buscarPacientePorRut(rutConsultado);
+            if (rutBuscadoRef.current !== rutConsultado) return;
+            if (paciente) {
+                updateField("nombrePaciente", `${paciente.nombre || ""} ${paciente.apellido || ""}`.trim());
+                toast.success("Datos del paciente completados automáticamente.");
+            }
+        } catch (error) {
+            if (rutBuscadoRef.current === rutConsultado) {
+                toast.error("No fue posible buscar los datos del paciente. Intente nuevamente.");
+            }
+        } finally {
+            if (rutBuscadoRef.current === rutConsultado) setBuscandoPaciente(false);
+        }
+    }
+
     function limpiarFormulario() {
+        rutBuscadoRef.current = "";
+        setBuscandoPaciente(false);
         setFormulario(emptyFormulario);
         toast.success("Formulario limpiado.");
     }
@@ -257,39 +284,53 @@ export default function RecetaLentesPage() {
             const metaBoxY = y;
             const metaX = margin + 8;
             const metaW = contentW - 16;
+            const metaBoxH = 36;
             const patientX = metaX + 4;
-            const rutX = metaX + 60;
-            const professionalX = metaX + 94;
+            const rutX = metaX + 54;
+            const fechaX = metaX + 84;
+            const fullValueWidth = metaW - 8;
 
             doc.setFillColor(248, 250, 252);
-            doc.roundedRect(metaX, metaBoxY, metaW, 24, 3, 3, "F");
+            doc.roundedRect(metaX, metaBoxY, metaW, metaBoxH, 3, 3, "F");
             doc.setDrawColor(226, 232, 240);
-            doc.roundedRect(metaX, metaBoxY, metaW, 24, 3, 3);
+            doc.roundedRect(metaX, metaBoxY, metaW, metaBoxH, 3, 3);
 
+            // Fila 1: paciente | rut paciente | fecha
             doc.setFont("helvetica", "bold");
             doc.setFontSize(7.5);
             doc.setTextColor(...muted);
             doc.text("PACIENTE", patientX, metaBoxY + 6);
             doc.text("RUT", rutX, metaBoxY + 6);
-            doc.text("PROFESIONAL", professionalX, metaBoxY + 6);
-            doc.text("FECHA", patientX, metaBoxY + 17);
+            doc.text("FECHA", fechaX, metaBoxY + 6);
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(8.2);
             doc.setTextColor(...text);
-            doc.text(doc.splitTextToSize(valorVisual(formulario.nombrePaciente, "-"), 42), patientX, metaBoxY + 12.5);
-            doc.text(doc.splitTextToSize(valorVisual(formulario.rutPaciente, "-"), 28), rutX, metaBoxY + 12.5);
-            doc.text(doc.splitTextToSize(valorVisual(formulario.nombreProfesional, "-"), 26), professionalX, metaBoxY + 11);
-            doc.text(`FECHA: ${formatDateDashed(formulario.fechaEmision)}`, patientX, metaBoxY + 21);
+            doc.text(doc.splitTextToSize(valorVisual(formulario.nombrePaciente, "-"), rutX - patientX - 4), patientX, metaBoxY + 12);
+            doc.text(doc.splitTextToSize(valorVisual(formulario.rutPaciente, "-"), fechaX - rutX - 4), rutX, metaBoxY + 12);
+            doc.setFontSize(7.6);
+            doc.text(formatDateDashed(formulario.fechaEmision), fechaX, metaBoxY + 12);
 
+            // Fila 2: profesional (ancho completo, para nombres largos)
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(...muted);
+            doc.text("PROFESIONAL", patientX, metaBoxY + 20);
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.2);
+            doc.setTextColor(...text);
+            doc.text(doc.splitTextToSize(valorVisual(formulario.nombreProfesional, "-"), fullValueWidth), patientX, metaBoxY + 26);
+
+            // Fila 3: RUT profesional + especialidad (ancho completo)
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(6);
+            doc.setFontSize(6.5);
             doc.setTextColor(...muted);
             const profesionalSecundario = [
                 formulario.rutProfesional.trim() ? `RUT: ${formulario.rutProfesional.trim()}` : null,
                 especialidadProfesional || null,
             ].filter(Boolean).join("  ·  ") || "-";
-            doc.text(doc.splitTextToSize(profesionalSecundario, 26), professionalX, metaBoxY + 17, {lineHeightFactor: 1.15});
+            doc.text(doc.splitTextToSize(profesionalSecundario, fullValueWidth), patientX, metaBoxY + 31.5, {lineHeightFactor: 1.15});
 
             y = 82;
 
@@ -460,9 +501,10 @@ export default function RecetaLentesPage() {
                                         placeholder="Ej: María José Pérez"
                                     />
                                     <InputField
-                                        label="RUT del paciente"
+                                        label={buscandoPaciente ? "RUT del paciente (buscando...)" : "RUT del paciente"}
                                         value={formulario.rutPaciente}
                                         onChange={(e) => updateField("rutPaciente", e.target.value)}
+                                        onBlur={autocompletarPaciente}
                                         placeholder="Ej: 12.345.678-9"
                                     />
                                     <div>

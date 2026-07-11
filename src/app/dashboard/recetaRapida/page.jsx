@@ -1,12 +1,13 @@
 'use client'
 
-import {useMemo, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import jsPDF from "jspdf";
 import ToasterClient from "@/Componentes/ToasterClient";
 import {toast} from "react-hot-toast";
 import ShadcnInput from "@/Componentes/shadcnInput2";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
 import { useProfesionales } from "@/hooks/useProfesionales";
+import { buscarPacientePorRut } from "@/lib/buscarPaciente";
 import {
     Select,
     SelectContent,
@@ -21,9 +22,9 @@ export default function RecetaRapida() {
 
     const [idFicha, setIdFicha] = useState("");
     const [nombrePaciente, setNombrePaciente] = useState("");
-    const [apellidoPaterno, setApellidoPaterno] = useState("");
-    const [apellidoMaterno, setApellidoMaterno] = useState("");
+    const [apellidoPaciente, setApellidoPaciente] = useState("");
     const [rutPaciente, setRutPaciente] = useState("");
+    const [buscandoPaciente, setBuscandoPaciente] = useState(false);
     const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split("T")[0]);
     const [fechaCaducidad, setFechaCaducidad] = useState("");
     const [descripcionReceta, setDescripcionReceta] = useState("");
@@ -31,6 +32,7 @@ export default function RecetaRapida() {
     const [nombreProfesional, setNombreProfesional] = useState("");
     const [rutProfesional, setRutProfesional] = useState("");
     const [diagnostico, setDiagnostico] = useState("");
+    const rutBuscadoRef = useRef("");
 
     const especialidadProfesional = useMemo(() => {
         const profesional = listaProfesionales.find(p => String(p.id_profesional) === String(idProfesional));
@@ -38,14 +40,37 @@ export default function RecetaRapida() {
     }, [listaProfesionales, idProfesional]);
 
     const nombreCompletoPaciente = useMemo(() => {
-        return [nombrePaciente, apellidoPaterno, apellidoMaterno].filter(Boolean).join(" ").trim();
-    }, [nombrePaciente, apellidoPaterno, apellidoMaterno]);
+        return [nombrePaciente, apellidoPaciente].filter(Boolean).join(" ").trim();
+    }, [nombrePaciente, apellidoPaciente]);
+
+    async function autocompletarPaciente() {
+        const rutConsultado = rutPaciente.trim();
+        if (!rutConsultado) return;
+        rutBuscadoRef.current = rutConsultado;
+        setBuscandoPaciente(true);
+        try {
+            const paciente = await buscarPacientePorRut(rutConsultado);
+            if (rutBuscadoRef.current !== rutConsultado) return;
+            if (paciente) {
+                setNombrePaciente(paciente.nombre || "");
+                setApellidoPaciente(paciente.apellido || "");
+                toast.success("Datos del paciente completados automáticamente.");
+            }
+        } catch (error) {
+            if (rutBuscadoRef.current === rutConsultado) {
+                toast.error("No fue posible buscar los datos del paciente. Intente nuevamente.");
+            }
+        } finally {
+            if (rutBuscadoRef.current === rutConsultado) setBuscandoPaciente(false);
+        }
+    }
 
     function limpiarFormulario() {
+        rutBuscadoRef.current = "";
+        setBuscandoPaciente(false);
         setIdFicha("");
         setNombrePaciente("");
-        setApellidoPaterno("");
-        setApellidoMaterno("");
+        setApellidoPaciente("");
         setRutPaciente("");
         setFechaEmision(new Date().toISOString().split("T")[0]);
         setFechaCaducidad("");
@@ -59,8 +84,7 @@ export default function RecetaRapida() {
     function validarFormulario() {
         if (!idFicha.trim()) return "Debe ingresar el número de ficha.";
         if (!nombrePaciente.trim()) return "Debe ingresar el nombre del paciente.";
-        if (!apellidoPaterno.trim()) return "Debe ingresar el apellido paterno.";
-        if (!apellidoMaterno.trim()) return "Debe ingresar el apellido materno.";
+        if (!apellidoPaciente.trim()) return "Debe ingresar el apellido del paciente.";
         if (!rutPaciente.trim()) return "Debe ingresar el RUT del paciente.";
         if (!fechaEmision) return "Debe seleccionar la fecha de emisión.";
         if (!fechaCaducidad) return "Debe seleccionar la fecha de caducidad.";
@@ -285,11 +309,14 @@ export default function RecetaRapida() {
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">RUT del paciente</label>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        RUT del paciente {buscandoPaciente && <span className="text-slate-400 font-normal">(buscando...)</span>}
+                                    </label>
                                     <ShadcnInput
                                         value={rutPaciente}
                                         placeholder="Ej: 12.345.678-9"
                                         onChange={(e) => setRutPaciente(e.target.value)}
+                                        onBlur={autocompletarPaciente}
                                         className="w-full"
                                     />
                                 </div>
@@ -305,21 +332,11 @@ export default function RecetaRapida() {
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Apellido paterno</label>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Apellido</label>
                                     <ShadcnInput
-                                        value={apellidoPaterno}
-                                        placeholder="Ej: González"
-                                        onChange={(e) => setApellidoPaterno(e.target.value)}
-                                        className="w-full"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Apellido materno</label>
-                                    <ShadcnInput
-                                        value={apellidoMaterno}
-                                        placeholder="Ej: Muñoz"
-                                        onChange={(e) => setApellidoMaterno(e.target.value)}
+                                        value={apellidoPaciente}
+                                        placeholder="Ej: González Muñoz"
+                                        onChange={(e) => setApellidoPaciente(e.target.value)}
                                         className="w-full"
                                     />
                                 </div>

@@ -1,6 +1,6 @@
 "use client"
 import {useParams} from "next/navigation";
-import {useState, useEffect, useRef} from "react";
+import {useState, useEffect, useRef, useMemo} from "react";
 import { useUser } from "@clerk/nextjs";
 import {toast} from "react-hot-toast";
 import jsPDF from "jspdf";
@@ -222,6 +222,63 @@ export default function Paciente() {
 
     const [listaFichas, setListaFichas] = useState([]);
     const [filtroProfesional, setFiltroProfesional] = useState("");
+    const [fichasExpandidas, setFichasExpandidas] = useState(new Set());
+    const [ultimaAtencion, setUltimaAtencion] = useState(null);
+    const pacienteAtencionRef = useRef(null);
+    const primeraExpansionRef = useRef(null);
+
+    function toggleFichaExpandida(id_ficha) {
+        setFichasExpandidas(prev => {
+            const next = new Set(prev);
+            if (next.has(id_ficha)) {
+                next.delete(id_ficha);
+            } else {
+                next.add(id_ficha);
+            }
+            return next;
+        });
+    }
+
+    async function cargarUltimaAtencion(rutPaciente, idPacienteConsultado) {
+        if (!rutPaciente) {
+            if (pacienteAtencionRef.current === idPacienteConsultado) setUltimaAtencion(null);
+            return;
+        }
+        pacienteAtencionRef.current = idPacienteConsultado;
+        try {
+            const res = await fetch(`${API}/reservaPacientes/seleccionarRut`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({rut: rutPaciente}),
+                mode: "cors"
+            });
+
+            if (pacienteAtencionRef.current !== idPacienteConsultado) return;
+
+            if (!res.ok) {
+                setUltimaAtencion(null);
+                return;
+            }
+
+            const data = await res.json();
+            if (!Array.isArray(data)) {
+                setUltimaAtencion(null);
+                return;
+            }
+
+            const atendidas = data
+                .filter(r => ["asiste", "finalizado"].includes(String(r.estadoReserva || "").toLowerCase()))
+                .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
+
+            setUltimaAtencion(atendidas[0]?.fechaInicio || null);
+        } catch (error) {
+            console.log(error);
+            if (pacienteAtencionRef.current === idPacienteConsultado) setUltimaAtencion(null);
+        }
+    }
 
     async function eliminarFicha(id_ficha) {
         try {
@@ -482,6 +539,7 @@ export default function Paciente() {
         setCorreo(paciente.correo || "");
         setDireccion(paciente.direccion || "");
         setPais(paciente.pais || "");
+        cargarUltimaAtencion(paciente.rut, id_paciente);
     }, [detallePaciente]);
 
     function calcularEdad(fechaNacimiento) {
@@ -506,6 +564,20 @@ export default function Paciente() {
 
     const pacienteActual = detallePaciente[0];
     const totalFichas = listaFichas.length;
+
+    const listaFichasOrdenada = useMemo(() => {
+        return [...listaFichas].sort((a, b) => new Date(b.fechaConsulta) - new Date(a.fechaConsulta));
+    }, [listaFichas]);
+
+    useEffect(() => {
+        if (listaFichasOrdenada.length === 0) return;
+        // Solo auto-expandir la más reciente una vez por paciente — no en cada
+        // recarga de la lista (eliminar, filtrar, limpiar filtro), para no
+        // colapsar fichas que el usuario haya expandido a propósito.
+        if (primeraExpansionRef.current === id_paciente) return;
+        primeraExpansionRef.current = id_paciente;
+        setFichasExpandidas(new Set([listaFichasOrdenada[0].id_ficha]));
+    }, [listaFichasOrdenada, id_paciente]);
     const dashboardRole = getDashboardRoleFromUser(user);
     const canSeeOdontograma = canAccessOdontograma(dashboardRole);
     const canSeeRecetaMedica = canAccessRecetasEnFicha(dashboardRole);
@@ -837,6 +909,12 @@ export default function Paciente() {
                                             <p className="text-[13px] font-semibold text-slate-700">{pacienteActual.sexo || "-"}</p>
                                         </div>
                                     </div>
+                                    <div className="rounded-2xl bg-violet-50/60 border border-violet-100 px-4 py-3 flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-[#6E56CF] uppercase tracking-widest">Última atención</span>
+                                        <span className="text-[13px] font-bold text-slate-700">
+                                            {ultimaAtencion ? formatearFecha(ultimaAtencion) : "Sin registro"}
+                                        </span>
+                                    </div>
                                     <div className="pt-4 border-t border-slate-100 space-y-4">
                                         <div className="flex items-center gap-3">
                                             <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
@@ -997,7 +1075,9 @@ export default function Paciente() {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    {listaFichas.map((ficha) => (
+                                    {listaFichasOrdenada.map((ficha, index) => {
+                                        const expandida = fichasExpandidas.has(ficha.id_ficha);
+                                        return (
                                         <div key={ficha.id_ficha} className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
                                             <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                 <div className="flex items-center gap-4">
@@ -1005,8 +1085,11 @@ export default function Paciente() {
                                                         #{ficha.id_ficha}
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-sm font-bold text-slate-800">
+                                                        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                                                             {parsearDatosDinamicos(ficha.datosDinamicos)?._plantillaNombre || ficha.tipoAtencion || "Consulta General"}
+                                                            {index === 0 && (
+                                                                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">Más reciente</span>
+                                                            )}
                                                         </h4>
                                                         <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Fecha: {formatearFecha(ficha.fechaConsulta)}</p>
                                                     </div>
@@ -1015,6 +1098,9 @@ export default function Paciente() {
                                                     <div className="h-9 px-3 rounded-xl bg-teal-50 text-teal-700 text-[11px] font-bold flex items-center border border-teal-100">
                                                         Prof: {ficha.observaciones || "N/A"}
                                                     </div>
+                                                    <button onClick={() => toggleFichaExpandida(ficha.id_ficha)} className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all">
+                                                        {expandida ? "Ocultar" : "Ver detalle"}
+                                                    </button>
                                                     <button onClick={() => descargarFichaPDF(ficha)} className="h-9 px-4 rounded-xl bg-violet-50 border border-violet-100 text-[#6E56CF] text-[11px] font-bold hover:bg-violet-100 transition-all">PDF</button>
                                                     <button onClick={() => editarFichaClinica(ficha.id_ficha)} className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all">Editar</button>
                                                     <button onClick={() => eliminarFicha(ficha.id_ficha)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all">
@@ -1022,6 +1108,7 @@ export default function Paciente() {
                                                     </button>
                                                 </div>
                                             </div>
+                                            {expandida && (
                                             <div className="p-8">
                                                 {(() => {
                                                     const datos = parsearDatosDinamicos(ficha.datosDinamicos)
@@ -1051,8 +1138,10 @@ export default function Paciente() {
                                                     return <p className="text-sm text-slate-400 italic text-center py-4">No hay datos estructurados en esta ficha.</p>
                                                 })()}
                                             </div>
+                                            )}
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

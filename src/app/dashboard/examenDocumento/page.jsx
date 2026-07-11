@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -8,6 +8,7 @@ import ToasterClient from "@/Componentes/ToasterClient";
 import ShadcnInput from "@/Componentes/shadcnInput2";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
 import { useProfesionales } from "@/hooks/useProfesionales";
+import { buscarPacientePorRut } from "@/lib/buscarPaciente";
 import {
     Select,
     SelectContent,
@@ -30,6 +31,7 @@ export default function ExamenDocumento() {
 
     const [nombrePaciente, setNombrePaciente] = useState("");
     const [rutPaciente, setRutPaciente] = useState("");
+    const [buscandoPaciente, setBuscandoPaciente] = useState(false);
     const [idProfesional, setIdProfesional] = useState("");
     const [nombreProfesional, setNombreProfesional] = useState("");
     const [rutProfesional, setRutProfesional] = useState("");
@@ -37,11 +39,33 @@ export default function ExamenDocumento() {
     const [listaExamenes, setListaExamenes] = useState([]);
     const [listaExamenesSolicitados, setListaExamenesSolicitados] = useState([]);
     const [busquedaExamen, setBusquedaExamen] = useState("");
+    const rutBuscadoRef = useRef("");
 
     const especialidadProfesional = useMemo(() => {
         const profesional = listaProfesionales.find(p => String(p.id_profesional) === String(idProfesional));
         return profesional?.descripcionProfesional || profesional?.especialidad || "";
     }, [listaProfesionales, idProfesional]);
+
+    async function autocompletarPaciente() {
+        const rutConsultado = rutPaciente.trim();
+        if (!rutConsultado) return;
+        rutBuscadoRef.current = rutConsultado;
+        setBuscandoPaciente(true);
+        try {
+            const paciente = await buscarPacientePorRut(rutConsultado);
+            if (rutBuscadoRef.current !== rutConsultado) return;
+            if (paciente) {
+                setNombrePaciente(`${paciente.nombre || ""} ${paciente.apellido || ""}`.trim());
+                toast.success("Datos del paciente completados automáticamente.");
+            }
+        } catch (error) {
+            if (rutBuscadoRef.current === rutConsultado) {
+                toast.error("No fue posible buscar los datos del paciente. Intente nuevamente.");
+            }
+        } finally {
+            if (rutBuscadoRef.current === rutConsultado) setBuscandoPaciente(false);
+        }
+    }
 
     async function seleccionarTodosExamenes() {
         try {
@@ -91,6 +115,8 @@ export default function ExamenDocumento() {
     }
 
     function limpiarDocumento() {
+        rutBuscadoRef.current = "";
+        setBuscandoPaciente(false);
         setNombrePaciente("");
         setRutPaciente("");
         setIdProfesional("");
@@ -368,11 +394,14 @@ export default function ExamenDocumento() {
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">RUT del paciente</label>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        RUT del paciente {buscandoPaciente && <span className="text-slate-400 font-normal">(buscando...)</span>}
+                                    </label>
                                     <ShadcnInput
                                         value={rutPaciente}
                                         placeholder="Ej: 12.345.678-9"
                                         onChange={(e) => setRutPaciente(e.target.value)}
+                                        onBlur={autocompletarPaciente}
                                         className="w-full"
                                     />
                                 </div>
