@@ -5,6 +5,7 @@ import {useParams, useRouter} from "next/navigation";
 import {toast} from "react-hot-toast";
 import jsPDF from "jspdf";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
+import { useProfesionales } from "@/hooks/useProfesionales";
 import ToasterClient from "@/Componentes/ToasterClient";
 import formatearFecha from "@/FuncionesTranversales/funcionesTranversales";
 import {InfoButton} from "@/Componentes/InfoButton";
@@ -25,13 +26,11 @@ export default function ReecetasPacientes() {
     const router = useRouter();
     const API = process.env.NEXT_PUBLIC_API_URL;
     const empresaNombre = useEmpresaNombre();
+    const listaProfesionales = useProfesionales();
 
     const [detallePaciente, setDetallePaciente] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [uiOnlyProfesionalSeleccionado, setUiOnlyProfesionalSeleccionado] = useState("");
-
-
-    const [listaProfesionales, setListaProfesionales] = useState([]);
 
     const {id_paciente} = useParams();
     const[nombre_paciente, setNombre_paciente] = useState("");
@@ -199,7 +198,7 @@ export default function ReecetasPacientes() {
                 doc.setFont("helvetica", "italic");
                 doc.setFontSize(8);
                 doc.setTextColor(92, 108, 128);
-                doc.text("AgendaClínica — Sistema de Gestión Clínica", margin, 32);
+                doc.text("AgendaClínica — Healthcare Information System", margin, 32);
 
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(8);
@@ -332,7 +331,7 @@ export default function ReecetasPacientes() {
                 }
             }
 
-            if (y + 24 > limiteContenidoY) {
+            if (y + 31 > limiteContenidoY) {
                 dibujarPie();
                 doc.addPage();
                 dibujarEncabezado();
@@ -349,6 +348,9 @@ export default function ReecetasPacientes() {
             doc.text(nombreProfesionalPDF, rightX, y + 16, {align: "right"});
             doc.text(especialidadProfesionalPDF, rightX, y + 21, {align: "right"});
             doc.text("Firma y timbre profesional", rightX, y + 26, {align: "right"});
+            doc.setFontSize(7.5);
+            doc.setTextColor(148, 163, 184);
+            doc.text(empresaNombre, rightX, y + 31, {align: "right"});
 
             dibujarPie();
 
@@ -408,30 +410,6 @@ export default function ReecetasPacientes() {
             return toast.error(`Ha ocurrido un error en el servidor por favor contacte a soporte`);
         }
     }
-
-
-    async function listarProfesionales() {
-        try {
-            const res = await fetch(`${API}/profesionales/seleccionarTodosProfesionales`,{
-                method: "GET",
-                headers: {Accept: "application/json"},
-                mode: "cors"
-            });
-
-            const respuestaBackend = await res.json();
-            if(Array.isArray(respuestaBackend)&&respuestaBackend.length>0) {
-                setListaProfesionales(respuestaBackend);
-            }
-
-        }catch (error) {
-            return toast.error(`Ha ocurrido un error en el servidor por favor contacte a soporte`);
-        }
-    }
-
-    useEffect(() => {
-        listarProfesionales()
-    },[])
-
 
 
     async function seleccionarRecetasPaciente(

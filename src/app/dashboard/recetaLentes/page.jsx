@@ -6,6 +6,14 @@ import ToasterClient from "@/Componentes/ToasterClient";
 import {toast} from "react-hot-toast";
 import ShadcnInput from "@/Componentes/shadcnInput2";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
+import { useProfesionales } from "@/hooks/useProfesionales";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
 
 const emptyGraduacion = {
     esf: "",
@@ -17,6 +25,7 @@ const emptyFormulario = {
     fechaEmision: new Date().toISOString().split("T")[0],
     nombrePaciente: "",
     rutPaciente: "",
+    idProfesional: "",
     nombreProfesional: "",
     rutProfesional: "",
     lejosOd: {...emptyGraduacion},
@@ -131,7 +140,13 @@ function PrescriptionTable({title, dataOd, dataOi, compact = false}) {
 
 export default function RecetaLentesPage() {
     const empresaNombre = useEmpresaNombre();
+    const listaProfesionales = useProfesionales();
     const [formulario, setFormulario] = useState(emptyFormulario);
+
+    const especialidadProfesional = useMemo(() => {
+        const profesional = listaProfesionales.find(p => String(p.id_profesional) === String(formulario.idProfesional));
+        return profesional?.descripcionProfesional || profesional?.especialidad || "";
+    }, [listaProfesionales, formulario.idProfesional]);
 
     const nombreArchivo = useMemo(() => {
         return `receta-lentes-${sanitizeFilename(formulario.nombrePaciente) || "paciente"}`;
@@ -228,7 +243,7 @@ export default function RecetaLentesPage() {
             doc.setFont("helvetica", "italic");
             doc.setFontSize(7.5);
             doc.setTextColor(92, 108, 128);
-            doc.text("AgendaClínica — Sistema de Gestión Clínica", margin + 6, 28.5);
+            doc.text("AgendaClínica — Healthcare Information System", margin + 6, 28.5);
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
@@ -264,8 +279,17 @@ export default function RecetaLentesPage() {
             doc.setTextColor(...text);
             doc.text(doc.splitTextToSize(valorVisual(formulario.nombrePaciente, "-"), 42), patientX, metaBoxY + 12.5);
             doc.text(doc.splitTextToSize(valorVisual(formulario.rutPaciente, "-"), 28), rutX, metaBoxY + 12.5);
-            doc.text(doc.splitTextToSize(valorVisual(formulario.nombreProfesional, "-"), 26), professionalX, metaBoxY + 12.5);
+            doc.text(doc.splitTextToSize(valorVisual(formulario.nombreProfesional, "-"), 26), professionalX, metaBoxY + 11);
             doc.text(`FECHA: ${formatDateDashed(formulario.fechaEmision)}`, patientX, metaBoxY + 21);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6);
+            doc.setTextColor(...muted);
+            const profesionalSecundario = [
+                formulario.rutProfesional.trim() ? `RUT: ${formulario.rutProfesional.trim()}` : null,
+                especialidadProfesional || null,
+            ].filter(Boolean).join("  ·  ") || "-";
+            doc.text(doc.splitTextToSize(profesionalSecundario, 26), professionalX, metaBoxY + 17, {lineHeightFactor: 1.15});
 
             y = 82;
 
@@ -441,12 +465,28 @@ export default function RecetaLentesPage() {
                                         onChange={(e) => updateField("rutPaciente", e.target.value)}
                                         placeholder="Ej: 12.345.678-9"
                                     />
-                                    <InputField
-                                        label="Nombre del profesional"
-                                        value={formulario.nombreProfesional}
-                                        onChange={(e) => updateField("nombreProfesional", e.target.value)}
-                                        placeholder="Ej: TMO Ivonne Orellana Machuca"
-                                    />
+                                    <div>
+                                        <label className="mb-1.5 block text-sm font-medium text-slate-700">Profesional</label>
+                                        <Select
+                                            value={formulario.idProfesional}
+                                            onValueChange={(value) => {
+                                                updateField("idProfesional", value);
+                                                const prof = listaProfesionales.find(p => String(p.id_profesional) === value);
+                                                updateField("nombreProfesional", prof?.nombreProfesional || "");
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-10 w-full rounded-md border-slate-200 bg-white text-sm text-slate-900 shadow-none">
+                                                <SelectValue placeholder="Seleccionar..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl border-slate-200 bg-white">
+                                                {listaProfesionales.map((p) => (
+                                                    <SelectItem key={p.id_profesional} value={String(p.id_profesional)} className="rounded-lg py-2">
+                                                        {p.nombreProfesional}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <InputField
                                         label="RUT profesional"
                                         value={formulario.rutProfesional}

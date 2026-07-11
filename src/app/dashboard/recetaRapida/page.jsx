@@ -6,9 +6,18 @@ import ToasterClient from "@/Componentes/ToasterClient";
 import {toast} from "react-hot-toast";
 import ShadcnInput from "@/Componentes/shadcnInput2";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
+import { useProfesionales } from "@/hooks/useProfesionales";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
 
 export default function RecetaRapida() {
     const empresaNombre = useEmpresaNombre();
+    const listaProfesionales = useProfesionales();
 
     const [idFicha, setIdFicha] = useState("");
     const [nombrePaciente, setNombrePaciente] = useState("");
@@ -18,8 +27,15 @@ export default function RecetaRapida() {
     const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split("T")[0]);
     const [fechaCaducidad, setFechaCaducidad] = useState("");
     const [descripcionReceta, setDescripcionReceta] = useState("");
+    const [idProfesional, setIdProfesional] = useState("");
     const [nombreProfesional, setNombreProfesional] = useState("");
+    const [rutProfesional, setRutProfesional] = useState("");
     const [diagnostico, setDiagnostico] = useState("");
+
+    const especialidadProfesional = useMemo(() => {
+        const profesional = listaProfesionales.find(p => String(p.id_profesional) === String(idProfesional));
+        return profesional?.descripcionProfesional || profesional?.especialidad || "";
+    }, [listaProfesionales, idProfesional]);
 
     const nombreCompletoPaciente = useMemo(() => {
         return [nombrePaciente, apellidoPaterno, apellidoMaterno].filter(Boolean).join(" ").trim();
@@ -34,7 +50,9 @@ export default function RecetaRapida() {
         setFechaEmision(new Date().toISOString().split("T")[0]);
         setFechaCaducidad("");
         setDescripcionReceta("");
+        setIdProfesional("");
         setNombreProfesional("");
+        setRutProfesional("");
         setDiagnostico("");
     }
 
@@ -47,7 +65,7 @@ export default function RecetaRapida() {
         if (!fechaEmision) return "Debe seleccionar la fecha de emisión.";
         if (!fechaCaducidad) return "Debe seleccionar la fecha de caducidad.";
         if (!descripcionReceta.trim()) return "Debe ingresar la descripción de la receta.";
-        if (!nombreProfesional.trim()) return "Debe ingresar el nombre del profesional.";
+        if (!nombreProfesional.trim()) return "Debe seleccionar el profesional.";
         if (!diagnostico.trim()) return "Debe ingresar el diagnóstico.";
 
         const emision = new Date(fechaEmision);
@@ -81,7 +99,7 @@ export default function RecetaRapida() {
             doc.setFont("helvetica", "italic");
             doc.setFontSize(8);
             doc.setTextColor(92, 108, 128);
-            doc.text("AgendaClínica — Sistema de Gestión Clínica", margin, 25);
+            doc.text("AgendaClínica — Healthcare Information System", margin, 25);
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8);
@@ -133,6 +151,20 @@ export default function RecetaRapida() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(8);
             doc.setTextColor(100, 116, 139);
+            doc.text("RUT PROFESIONAL", margin, y);
+            doc.text("ESPECIALIDAD", 100, y);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9.5);
+            doc.setTextColor(15, 23, 42);
+            doc.text(rutProfesional.trim() || "-", margin, y + 7);
+            doc.text(doc.splitTextToSize(especialidadProfesional || "-", rightX - 100), 100, y + 7);
+
+            y += 18;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
             doc.text("DIAGNOSTICO", margin, y);
 
             doc.setFont("helvetica", "normal");
@@ -167,7 +199,7 @@ export default function RecetaRapida() {
             const altoCaja = Math.max(88, alturaTexto + 18);
             doc.roundedRect(margin - 2, inicioCaja, rightX - margin + 4, altoCaja, 1.5, 1.5);
 
-            const firmaY = Math.min(pageH - 36, inicioCaja + altoCaja + 34);
+            const firmaY = Math.min(pageH - 46, inicioCaja + altoCaja + 34);
 
             doc.setDrawColor(148, 163, 184);
             doc.setLineWidth(0.35);
@@ -177,7 +209,11 @@ export default function RecetaRapida() {
             doc.setFontSize(9);
             doc.setTextColor(71, 85, 105);
             doc.text(nombreProfesional, rightX, firmaY + 6, {align: "right"});
-            doc.text("Firma y timbre profesional", rightX, firmaY + 11, {align: "right"});
+            doc.setFontSize(8);
+            doc.text(especialidadProfesional || "-", rightX, firmaY + 11, {align: "right"});
+            doc.text("Firma y timbre profesional", rightX, firmaY + 16, {align: "right"});
+            doc.setTextColor(148, 163, 184);
+            doc.text(empresaNombre, rightX, firmaY + 21, {align: "right"});
 
             const footerY = pageH - 14;
             doc.setDrawColor(226, 232, 240);
@@ -289,11 +325,34 @@ export default function RecetaRapida() {
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Nombre del profesional</label>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">Profesional</label>
+                                    <Select
+                                        value={idProfesional}
+                                        onValueChange={(value) => {
+                                            setIdProfesional(value);
+                                            const prof = listaProfesionales.find(p => String(p.id_profesional) === value);
+                                            setNombreProfesional(prof?.nombreProfesional || "");
+                                        }}
+                                    >
+                                        <SelectTrigger className="h-10 w-full rounded-md border-slate-200 bg-white text-sm text-slate-900 shadow-none">
+                                            <SelectValue placeholder="Seleccionar..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border-slate-200 bg-white">
+                                            {listaProfesionales.map((p) => (
+                                                <SelectItem key={p.id_profesional} value={String(p.id_profesional)} className="rounded-lg py-2">
+                                                    {p.nombreProfesional}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">RUT del profesional</label>
                                     <ShadcnInput
-                                        value={nombreProfesional}
-                                        placeholder="Ej: Dr. Felipe Rojas"
-                                        onChange={(e) => setNombreProfesional(e.target.value)}
+                                        value={rutProfesional}
+                                        placeholder="Ej: 12.345.678-9"
+                                        onChange={(e) => setRutProfesional(e.target.value)}
                                         className="w-full"
                                     />
                                 </div>

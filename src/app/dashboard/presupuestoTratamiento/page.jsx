@@ -17,6 +17,7 @@ import autoTable from "jspdf-autotable";
 import {SelectDinamic} from "@/Componentes/SelectDinamic";
 import {InputTextDinamic} from "@/Componentes/InputTextDinamic";
 import { useEmpresaNombre } from "@/hooks/useEmpresaNombre";
+import { useProfesionales } from "@/hooks/useProfesionales";
 
 const formatoCLP = new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -28,17 +29,23 @@ const formatoCLP = new Intl.NumberFormat("es-CL", {
 export default function PresupuestoTratamiento() {
     const API = process.env.NEXT_PUBLIC_API_URL;
     const empresaNombre = useEmpresaNombre();
+    const listaProfesionales = useProfesionales();
     const [listaServicios, setListaServicios] = useState([]);
     const [listaPresupuesto, setListaPresupuesto] = useState([]);
-    const [listaProfesionales, setListaProfesionales] = useState([]);
 
     const totalPresupuesto = useMemo(
         () => listaPresupuesto.reduce((sum, el) => sum + (el.valorProducto || 0), 0),
         [listaPresupuesto]
     );
     const [nombreProfesional, setNombreProfesional] = useState("");
+    const [rutProfesionalManual, setRutProfesionalManual] = useState("");
     const [nombrePaciente, setNombrePaciente] = useState("");
     const [rutaPaciente, setRutaPaciente] = useState("");
+
+    const especialidadProfesional = useMemo(() => {
+        const profesional = listaProfesionales.find(p => String(p.id_profesional) === String(nombreProfesional));
+        return profesional?.descripcionProfesional || profesional?.especialidad || "";
+    }, [listaProfesionales, nombreProfesional]);
 
     async function getProductosServicios() {
         try {
@@ -120,7 +127,7 @@ export default function PresupuestoTratamiento() {
         doc.setFont("helvetica", "italic");
         doc.setFontSize(7.5);
         doc.setTextColor(...MID);
-        doc.text("AgendaClínica — Sistema de Gestión Clínica", margin, 20);
+        doc.text("AgendaClínica — Healthcare Information System", margin, 20);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
@@ -160,7 +167,18 @@ export default function PresupuestoTratamiento() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(...BLACK);
-        doc.text(profesionalLabel?.nombreProfesional || "—", margin + 5, y + 16);
+        doc.text(profesionalLabel?.nombreProfesional || "—", margin + 5, y + 14);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(...MID);
+        const profesionalSecundario = [
+            rutProfesionalManual.trim() ? `RUT: ${rutProfesionalManual.trim()}` : null,
+            profesionalLabel?.descripcionProfesional || profesionalLabel?.especialidad || null,
+        ].filter(Boolean).join("  ·  ");
+        if (profesionalSecundario) {
+            doc.text(profesionalSecundario, margin + 5, y + 20);
+        }
 
         // Columna derecha: Paciente + RUT | Fecha
         doc.setFont("helvetica", "bold");
@@ -272,7 +290,10 @@ export default function PresupuestoTratamiento() {
         doc.setFontSize(7);
         doc.setTextColor(...MID);
         doc.text("Firma y Timbre Profesional", margin + sigW / 2, finalY + 5, { align: "center" });
+        doc.setFontSize(6);
+        doc.text(empresaNombre, margin + sigW / 2, finalY + 9, { align: "center" });
         // Firma paciente
+        doc.setFontSize(7);
         doc.line(rightX - sigW, finalY, rightX, finalY);
         doc.text("Firma Paciente / Representante", rightX - sigW / 2, finalY + 5, { align: "center" });
 
@@ -284,46 +305,13 @@ export default function PresupuestoTratamiento() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(6.5);
         doc.setTextColor(...LIGHT);
-        doc.text(`${empresaNombre}  ·  Generado por AgendaClínica`, margin, footerY);
+        doc.text(`Generado por AgendaClínica | ${empresaNombre}`, margin, footerY);
         doc.text(`Folio ${folio}  ·  Emisión: ${fechaEmision}`, rightX, footerY, { align: "right" });
 
         doc.save(`presupuesto-${(nombrePaciente || "paciente").toLowerCase().replace(/\s+/g, "-")}.pdf`);
     }
 
 
-
-
-
-
-    async function seleccionarTodosProfesionales() {
-        try {
-            const res = await fetch(`${API}/profesionales/seleccionarTodosProfesionales`, {
-                method: 'GET',
-                headers: {Accept: 'application/json'},
-                mode: 'cors'
-            })
-
-            if (!res.ok) {
-                return toast.error('Error al cargar los profesionales, por favor intente nuevamente.');
-
-            }else{
-                const respustaBackend = await res.json();
-
-                if(respustaBackend){
-                    setListaProfesionales(respustaBackend);
-
-                }else{
-                    return toast.error('Error al cargar los profesionales, por favor intente nuevamente.');
-                }
-            }
-        }catch (error) {
-            return toast.error('Error al cargar los profesionales, por favor intente nuevamente.');
-        }
-    }
-
-    useEffect(() => {
-        seleccionarTodosProfesionales();
-    }, []);
 
 
 
@@ -443,18 +431,29 @@ export default function PresupuestoTratamiento() {
                             </div>
 
                             <div className="p-5 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Profesional</label>
-                                    <SelectDinamic
-                                        value={nombreProfesional}
-                                        onChange={(e) => setNombreProfesional(e.target.value)}
-                                        className="rounded-xl border-slate-200 focus:border-[#6E56CF] focus:ring-violet-100"
-                                        options={listaProfesionales.map(profesional => ({
-                                            value: profesional.id_profesional,
-                                            label: profesional.nombreProfesional
-                                        }))}
-                                        placeholder="Selecciona un profesional"
-                                    />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Profesional</label>
+                                        <SelectDinamic
+                                            value={nombreProfesional}
+                                            onChange={(e) => setNombreProfesional(e.target.value)}
+                                            className="rounded-xl border-slate-200 focus:border-[#6E56CF] focus:ring-violet-100"
+                                            options={listaProfesionales.map(profesional => ({
+                                                value: profesional.id_profesional,
+                                                label: profesional.nombreProfesional
+                                            }))}
+                                            placeholder="Selecciona un profesional"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">RUT profesional</label>
+                                        <InputTextDinamic
+                                            value={rutProfesionalManual}
+                                            onChange={(e) => setRutProfesionalManual(e.target.value)}
+                                            placeholder="Ej: 12.345.678-9"
+                                            className="rounded-xl border-slate-200 focus:border-[#6E56CF] focus:ring-violet-100"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
