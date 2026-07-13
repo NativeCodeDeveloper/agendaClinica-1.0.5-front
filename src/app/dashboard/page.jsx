@@ -4,7 +4,6 @@ import ShadcnInput from "@/Componentes/shadcnInput2";
 import ToasterClient from "@/Componentes/ToasterClient";
 import toast from "react-hot-toast";
 import {useRouter} from "next/navigation";
-import {useUser} from "@clerk/nextjs";
 import {Calendar28} from "@/Componentes/shadcnCalendarSelector";
 import {InfoButton} from "@/Componentes/InfoButton";
 import {canAccessFichasClinicas, getDashboardRoleFromUser} from "@/lib/dashboard-access";
@@ -40,9 +39,8 @@ const STORAGE_KEYS = {
 export default function AgendaCitas() {
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
-    const {user, isLoaded} = useUser();
-    const dashboardRole = getDashboardRoleFromUser(user);
-    const canSeeFichasClinicas = isLoaded && canAccessFichasClinicas(dashboardRole);
+    const dashboardRole = getDashboardRoleFromUser(null);
+    const canSeeFichasClinicas = canAccessFichasClinicas(dashboardRole);
     const [dataLista, setdataLista] = useState([]);
     const [dataListaBase, setDataListaBase] = useState([]);
     const [nombrePaciente, setnombrePaciente] = useState("");

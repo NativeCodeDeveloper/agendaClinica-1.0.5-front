@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import UserMenu from "./UserMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { getDashboardRoleFromUser, getVisibleDashboardSections } from "@/lib/dashboard-access";
@@ -203,8 +202,7 @@ function NavAccordion({ id, label, icon, children, openAccordions, onToggle }) {
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
-  const role = getDashboardRoleFromUser(user);
+  const role = getDashboardRoleFromUser(null);
   const sections = useMemo(() => getVisibleDashboardSections(role), [role]);
 
   const [openAccordions, setOpenAccordions] = useState(() => {
@@ -271,8 +269,6 @@ export default function SidebarNav() {
       return next;
     });
   }
-
-  if (!isLoaded) return null;
 
   return (
     <>

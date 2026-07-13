@@ -37,7 +37,6 @@ import { PhoneInput } from "@/Componentes/PhoneInput";
 import { RutDisplay } from "@/Componentes/RutDisplay";
 import { getStateTokens } from "@/lib/designTokens";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { canAccessFichasClinicas, getDashboardRoleFromUser } from "@/lib/dashboard-access";
 
 const ACCIONES_ESTADO = [
@@ -63,9 +62,8 @@ function getEstadoActionStyle(estado) {
 // ─── Sección de información (solo lectura) ────────────────────────────────────
 function InfoSection({ reserva, start, end, formatHora, formatFechaLarga }) {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
-  const dashboardRole = getDashboardRoleFromUser(user);
-  const canSeeFichasClinicas = isLoaded && canAccessFichasClinicas(dashboardRole);
+  const dashboardRole = getDashboardRoleFromUser(null);
+  const canSeeFichasClinicas = canAccessFichasClinicas(dashboardRole);
   const nombre = (reserva?.nombrePaciente ?? "").trim();
   const apellido = (reserva?.apellidoPaciente ?? "").trim();
   const nombreCompleto = [nombre, apellido].filter(Boolean).join(" ");

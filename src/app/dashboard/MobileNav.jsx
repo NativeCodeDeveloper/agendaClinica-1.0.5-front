@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { Michroma } from "next/font/google";
 import {
   CalendarDays,
@@ -49,8 +48,7 @@ const ICONS = {
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
-  const role = getDashboardRoleFromUser(user);
+  const role = getDashboardRoleFromUser(null);
   const sections = getVisibleDashboardSections(role);
 
   return (
@@ -115,13 +113,7 @@ export default function MobileNav() {
             </div>
 
             <nav className="max-h-[72vh] space-y-4 overflow-y-auto px-4 pb-4 pt-4">
-              {!isLoaded ? (
-                <div className="space-y-3">
-                  <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" />
-                  <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" />
-                </div>
-              ) : (
-                sections.map((section) => (
+              {sections.map((section) => (
                   <div
                     key={section.id}
                     className="rounded-2xl border border-slate-200/80 bg-white/80 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.04)]"
@@ -163,8 +155,7 @@ export default function MobileNav() {
                       })}
                     </div>
                   </div>
-                ))
-              )}
+                ))}
 
               <div className="rounded-2xl border border-cyan-100 bg-[linear-gradient(135deg,rgba(236,254,255,0.9),rgba(248,250,252,0.95))] p-2">
                 <Link

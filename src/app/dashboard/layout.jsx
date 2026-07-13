@@ -5,7 +5,6 @@
 // archivo para referencia y mantenimiento futuro.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { ClerkProvider } from "@clerk/nextjs";
 import { Michroma } from "next/font/google";
 import MobileNav from "./MobileNav";
 import SidebarNav from "./SidebarNav";
@@ -159,7 +158,7 @@ const IcoFichas = (
 // ─── Layout principal ─────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }) {
     return (
-        <ClerkProvider>
+        <>
             <div className="h-screen w-full overflow-hidden bg-[#FAFAFB]">
                 <div className="flex h-full w-full">
 
@@ -203,7 +202,7 @@ export default function DashboardLayout({ children }) {
                 </div>
             </div>
             <NotificationProvider />
-        </ClerkProvider>
+        </>
     );
 }
 

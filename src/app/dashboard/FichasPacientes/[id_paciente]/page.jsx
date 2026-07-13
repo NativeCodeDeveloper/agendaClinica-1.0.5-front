@@ -1,7 +1,11 @@
 "use client"
 import {useParams} from "next/navigation";
+<<<<<<< HEAD
 import {useState, useEffect, useRef, useMemo} from "react";
 import { useUser } from "@clerk/nextjs";
+=======
+import {useState, useEffect, useRef} from "react";
+>>>>>>> 93cc53f (periodontograma)
 import {toast} from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -144,7 +148,6 @@ function sanitizarNombreArchivo(valor) {
 export default function Paciente() {
 
     const {id_paciente} = useParams();
-    const { user } = useUser();
     const [detallePaciente, setDetallePaciente] = useState([])
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
@@ -175,6 +178,10 @@ export default function Paciente() {
 
     function verOdontogramas() {
         router.push(`/dashboard/odontogramasPaciente/${id_paciente}`);
+    }
+
+    function verPeriodontograma() {
+        router.push(`/dashboard/periOdontogramaPaciente/${id_paciente}`);
     }
 
     function editarFichaClinica(id_ficha) {
@@ -564,6 +571,7 @@ export default function Paciente() {
 
     const pacienteActual = detallePaciente[0];
     const totalFichas = listaFichas.length;
+<<<<<<< HEAD
 
     const listaFichasOrdenada = useMemo(() => {
         return [...listaFichas].sort((a, b) => new Date(b.fechaConsulta) - new Date(a.fechaConsulta));
@@ -579,6 +587,9 @@ export default function Paciente() {
         setFichasExpandidas(new Set([listaFichasOrdenada[0].id_ficha]));
     }, [listaFichasOrdenada, id_paciente]);
     const dashboardRole = getDashboardRoleFromUser(user);
+=======
+    const dashboardRole = getDashboardRoleFromUser(null);
+>>>>>>> 93cc53f (periodontograma)
     const canSeeOdontograma = canAccessOdontograma(dashboardRole);
     const canSeeRecetaMedica = canAccessRecetasEnFicha(dashboardRole);
 
@@ -965,6 +976,14 @@ export default function Paciente() {
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 9.75h4.5m-4.5 4.5h4.5M7.5 3.75h9A2.25 2.25 0 0118.75 6v12A2.25 2.25 0 0116.5 20.25h-9A2.25 2.25 0 015.25 18V6A2.25 2.25 0 017.5 3.75z" /></svg>
                                     </div>
                                     <span className="text-[13px] font-bold text-slate-700">Odontograma</span>
+                                </button>
+                            )}
+                            {canSeeOdontograma && (
+                                <button onClick={verPeriodontograma} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                                    <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.5 12.75h9m-9 3h9M8.25 3.75h7.5A2.25 2.25 0 0118 6v12a2.25 2.25 0 01-2.25 2.25h-7.5A2.25 2.25 0 016 18V6a2.25 2.25 0 012.25-2.25zM9 7.5h.008v.008H9V7.5zm3 0h.008v.008H12V7.5zm3 0h.008v.008H15V7.5z" /></svg>
+                                    </div>
+                                    <span className="text-[13px] font-bold text-slate-700">Periodontograma</span>
                                 </button>
                             )}
                             {canSeeRecetaMedica && (

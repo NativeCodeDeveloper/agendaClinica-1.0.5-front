@@ -2,7 +2,6 @@
 import {useParams, useSearchParams} from "next/navigation";
 import {useState, useEffect, useRef} from "react";
 import {toast} from "react-hot-toast";
-import {useUser} from "@clerk/nextjs";
 import ToasterClient from "@/Componentes/ToasterClient";
 import formatearFecha from "@/FuncionesTranversales/funcionesTranversales.js"
 import {ShadcnButton} from "@/Componentes/shadcnButton";
@@ -29,9 +28,8 @@ export default function Paciente(){
     const [detallePaciente, setDetallePaciente] = useState([])
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
-    const {user, isLoaded} = useUser();
-    const dashboardRole = getDashboardRoleFromUser(user);
-    const canSeeFichasClinicas = isLoaded && canAccessFichasClinicas(dashboardRole);
+    const dashboardRole = getDashboardRoleFromUser(null);
+    const canSeeFichasClinicas = canAccessFichasClinicas(dashboardRole);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const formularioRef = useRef(null);
 
