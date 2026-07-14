@@ -116,9 +116,17 @@ async function llamarCortex(mensajeUsuario){
             role="dialog"
             aria-modal="false"
             aria-labelledby="cortex-assistant-title"
-            className="pointer-events-auto flex h-[min(460px,calc(100vh-96px))] w-[calc(100vw-32px)] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-[#28282a]/95 shadow-[0_32px_72px_-12px_rgba(0,0,0,0.85)] backdrop-blur-2xl sm:w-[360px]"
+            className="cortex-glass-shell pointer-events-auto relative isolate flex h-[min(560px,calc(100vh-48px))] w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[28px] border border-white/70 bg-[rgba(239,244,255,0.62)] shadow-[0_30px_80px_-24px_rgba(29,42,77,0.46),0_8px_30px_-14px_rgba(73,91,145,0.22),inset_0_1px_0_rgba(255,255,255,0.96)] ring-1 ring-slate-900/[0.05] backdrop-blur-[34px] backdrop-saturate-[1.65] sm:w-[390px]"
           >
-            <header className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3.5">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+              <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 via-white/20 to-transparent" />
+              <div className="absolute -right-20 top-14 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(222,180,255,0.34)_0%,rgba(222,180,255,0.08)_48%,transparent_72%)] blur-2xl" />
+              <div className="absolute -left-24 top-36 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(135,199,255,0.24)_0%,rgba(135,199,255,0.05)_54%,transparent_74%)] blur-2xl" />
+              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white/45 to-transparent" />
+              <div className="absolute inset-[1px] rounded-[27px] border border-white/35" />
+            </div>
+
+            <header className="relative z-10 flex items-center justify-between border-b border-white/55 bg-white/[0.16] px-4 py-3.5 backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <div
                   className="relative h-14 w-14 rounded-full bg-transparent"
@@ -135,13 +143,13 @@ async function llamarCortex(mensajeUsuario){
                 <div>
                   <h2
                     id="cortex-assistant-title"
-                    className="text-[13px] font-bold tracking-[0.18em] text-white antialiased"
+                    className="text-[13px] font-bold tracking-[0.2em] text-[#15213d] antialiased"
                     style={{ fontFamily: "var(--font-outfit)" }}
                   >
                     CORTEX A.I
                   </h2>
                   <p
-                    className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.2em] text-white/30 antialiased"
+                    className="mt-1 text-[8px] font-semibold uppercase tracking-[0.28em] text-slate-500/70 antialiased"
                     style={{ fontFamily: "var(--font-outfit)" }}
                   >
                     Agente Inteligencia Artificial
@@ -154,7 +162,7 @@ async function llamarCortex(mensajeUsuario){
                   type="button"
                   onClick={() => setIsOpen(false)}
                   aria-label="Minimizar CORTEX A.I"
-                  className="grid h-8 w-8 place-items-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white/80 focus:outline-none"
+                  className="grid h-8 w-8 place-items-center rounded-xl border border-transparent text-slate-500 transition duration-200 hover:border-white/70 hover:bg-white/50 hover:text-slate-800 hover:shadow-[0_6px_18px_-8px_rgba(30,41,59,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/60"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
@@ -162,7 +170,7 @@ async function llamarCortex(mensajeUsuario){
                   type="button"
                   onClick={() => setIsOpen(false)}
                   aria-label="Cerrar CORTEX A.I"
-                  className="grid h-8 w-8 place-items-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white/80 focus:outline-none"
+                  className="grid h-8 w-8 place-items-center rounded-xl border border-transparent text-slate-500 transition duration-200 hover:border-white/70 hover:bg-white/50 hover:text-slate-800 hover:shadow-[0_6px_18px_-8px_rgba(30,41,59,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/60"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -171,19 +179,19 @@ async function llamarCortex(mensajeUsuario){
 
             <div
               aria-live="polite"
-              className="flex-1 space-y-3 overflow-y-auto bg-black/20 px-4 py-5"
+              className="cortex-scrollbar relative z-10 flex-1 space-y-3.5 overflow-y-auto px-4 py-5 sm:px-5"
             >
-              <div className="max-w-[86%] break-words rounded-2xl rounded-tl-sm border border-white/[0.08] bg-white/[0.07] px-4 py-3 text-[13px] leading-relaxed text-white/80 shadow-sm">
+              <div className="max-w-[88%] break-words rounded-[20px] rounded-tl-md border border-white/75 bg-white/45 px-4 py-3.5 text-[13px] leading-[1.65] text-slate-700 shadow-[0_14px_34px_-22px_rgba(35,52,91,0.42),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl">
                 Hola, soy el agente de IA de AgendaClínica. Haré todo el trabajo por ti, solo pídemelo.
               </div>
 
               {mockConversation.map((item, index) => (
                 <div
                   key={`${item.role}-${index}`}
-                  className={`w-fit max-w-[86%] break-words rounded-2xl px-4 py-3 text-[13px] leading-relaxed shadow-sm ${
+                  className={`cortex-message-enter w-fit max-w-[88%] break-words rounded-[20px] px-4 py-3.5 text-[13px] leading-[1.65] ${
                     item.role === "user"
-                      ? "ml-auto rounded-tr-sm border border-violet-900/30 bg-[#21183D] text-white"
-                      : "rounded-tl-sm border border-white/[0.08] bg-white/[0.07] text-white/80"
+                      ? "ml-auto rounded-tr-md border border-white/35 bg-[linear-gradient(145deg,rgba(76,85,180,0.92),rgba(94,84,180,0.82))] text-white shadow-[0_14px_30px_-18px_rgba(50,45,130,0.68),inset_0_1px_0_rgba(255,255,255,0.3)] backdrop-blur-xl"
+                      : "rounded-tl-md border border-white/75 bg-white/45 text-slate-700 shadow-[0_14px_34px_-22px_rgba(35,52,91,0.42),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl"
                   }`}
                 >
                   {item.content}
@@ -220,13 +228,13 @@ async function llamarCortex(mensajeUsuario){
               <div ref={conversationEndRef} />
             </div>
 
-            <footer className="border-t border-white/[0.06] p-3">
+            <footer className="relative z-10 border-t border-white/55 bg-white/[0.14] p-3.5 backdrop-blur-2xl sm:p-4">
               <form
                 onSubmit={(event)=>{
                     event.preventDefault();
                      llamarCortex(message);
                 }}
-                className={`cortex-input-aura relative isolate flex items-end gap-2 rounded-xl border border-white/[0.08] bg-white/[0.06] p-1.5 pl-3 transition ${
+                className={`cortex-input-aura relative isolate flex items-end gap-2 rounded-[19px] border border-white/80 bg-white/50 p-1.5 pl-3.5 shadow-[0_14px_30px_-20px_rgba(42,56,98,0.48),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-2xl transition duration-300 focus-within:bg-white/65 focus-within:shadow-[0_18px_38px_-20px_rgba(69,74,159,0.5),inset_0_1px_0_rgba(255,255,255,1)] ${
                   isEvolving ? "is-thinking" : ""
                 }`}
               >
@@ -245,12 +253,12 @@ async function llamarCortex(mensajeUsuario){
                   rows={1}
                   aria-label="Mensaje para CORTEX A.I"
                   placeholder={isEvolving ? "CORTEX esta respondiendo..." : "Escribe un mensaje..."}
-                  className="max-h-24 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-[13px] leading-5 text-white/80 outline-none placeholder:text-white/25"
+                  className="max-h-24 min-h-9 flex-1 resize-none bg-transparent py-2 text-[13px] leading-5 text-slate-700 outline-none placeholder:text-slate-400/90 disabled:cursor-wait disabled:opacity-60"
                 />
                 <div className="flex shrink-0 flex-col items-end gap-1.5 pb-0.5">
                   <span
                     className={`font-mono text-[9px] tabular-nums transition-colors ${
-                      isNearLimit ? "text-amber-400" : "text-slate-600"
+                      isNearLimit ? "text-amber-600" : "text-slate-400"
                     }`}
                   >
                     {message.length}/{MAX_CHARS}
@@ -259,16 +267,16 @@ async function llamarCortex(mensajeUsuario){
                     type="submit"
                     aria-label="Enviar mensaje"
                     disabled={!message.trim() || isEvolving}
-                    className="grid h-9 w-9 place-items-center rounded-lg bg-[#21183D] text-white transition hover:bg-violet-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+                    className="grid h-9 w-9 place-items-center rounded-[12px] border border-white/50 bg-[linear-gradient(145deg,#7187f4,#8b82ed)] text-white shadow-[0_8px_18px_-8px_rgba(78,85,190,0.72),inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[0_11px_22px_-8px_rgba(78,85,190,0.78)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white/50 disabled:cursor-not-allowed disabled:border-white/30 disabled:bg-[rgba(148,163,184,0.28)] disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0"
                   >
                     <Send className="h-4 w-4" />
                   </button>
                 </div>
               </form>
-              <div className="mt-2 flex items-center justify-between px-0.5">
-                <p className="text-[9px] text-white/25">Shift + Enter para nueva línea</p>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              <div className="mt-2.5 flex items-center justify-between px-1">
+                <p className="text-[9px] font-medium tracking-wide text-slate-500/70">Shift + Enter para nueva línea</p>
+                <div className="flex items-center gap-1.5" aria-label="CORTEX A.I disponible">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.12),0_0_10px_rgba(52,211,153,0.45)]" />
                 </div>
               </div>
             </footer>
