@@ -2,7 +2,7 @@
 // CRÍTICO: Este SW NUNCA cachea datos de pacientes, fichas clínicas ni reservas.
 // Solo se cachea el shell de la app y assets estáticos.
 
-const CACHE_NAME = 'ac-shell-v1';
+const CACHE_NAME = 'ac-shell-v2';
 
 const SHELL_ASSETS = [
     '/',
@@ -57,12 +57,25 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
+    const esDesarrolloLocal =
+        url.hostname === 'localhost' ||
+        url.hostname === '127.0.0.1' ||
+        /^10\./.test(url.hostname) ||
+        /^192\.168\./.test(url.hostname) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(url.hostname);
 
     // Siempre red para rutas sensibles (datos médicos, APIs)
     if (esRutaSensible(url.pathname)) return;
 
-    // Assets estáticos de Next.js → cache first (son inmutables por hash)
+    // En desarrollo los nombres de chunks pueden reutilizarse entre recompilaciones.
     if (url.pathname.startsWith('/_next/static/')) {
+        if (esDesarrolloLocal) {
+            event.respondWith(
+                fetch(request).catch(() => caches.match(request))
+            );
+            return;
+        }
+
         event.respondWith(
             caches.match(request).then(cached => cached || fetch(request).then(res => {
                 const clone = res.clone();

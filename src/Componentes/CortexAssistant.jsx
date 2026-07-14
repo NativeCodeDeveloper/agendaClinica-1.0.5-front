@@ -17,7 +17,7 @@ const THINKING_LABELS = [
   "haciendo sinapsis...",
   "propagacion neuronal...",
   "mielinizando...",
-  "realizando cognicion...",
+  "Alcanzando el Cortex...",
 ];
 
 export default function CortexAssistant() {
@@ -28,6 +28,7 @@ export default function CortexAssistant() {
   const [thinkingLabelIndex, setThinkingLabelIndex] = useState(0);
   const inputRef = useRef(null);
   const conversationEndRef = useRef(null);
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -54,39 +55,57 @@ export default function CortexAssistant() {
       setThinkingLabelIndex((current) => (current + 1) % THINKING_LABELS.length);
     }, 1500);
 
-    const responseTimer = window.setTimeout(() => {
-      setMockConversation((current) => [
-        ...current,
-        {
-          role: "cortex",
-          type: "capabilities",
-        },
-      ]);
-      setIsEvolving(false);
-      inputRef.current?.focus();
-    }, 4000);
 
     return () => {
       window.clearInterval(labelTimer);
-      window.clearTimeout(responseTimer);
     };
   }, [isEvolving]);
 
   const isNearLimit = message.length > MAX_CHARS * 0.85;
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
 
-    const userMessage = message.trim();
-    if (!userMessage || isEvolving) return;
+
+async function llamarCortex(mensajeUsuario){
+
+    if(!mensajeUsuario){
+        return;
+    }
 
     setMockConversation((current) => [
-      ...current,
-      { role: "user", content: userMessage },
+        ...current,
+        { role: "user", content: mensajeUsuario }
     ]);
+
     setMessage("");
     setIsEvolving(true);
-  };
+
+    const respuestaCortex = await fetch(`${API}/cortex/mensaje`,{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "mensaje": [
+              {
+                  role: "user", content: mensajeUsuario
+              }
+          ]
+        })
+    });
+
+    const data = await respuestaCortex.json();
+
+    if(data){
+        setIsEvolving(false);
+    }
+
+    setMockConversation((current) => [
+        ...current,
+        { role: "Cortex", content: data.respuesta }
+    ]);
+}
+
+
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[80]">
@@ -167,28 +186,10 @@ export default function CortexAssistant() {
                       : "rounded-tl-sm border border-white/[0.08] bg-white/[0.07] text-white/80"
                   }`}
                 >
-                  {item.type === "capabilities" ? (
-                    <div>
-                      <p>De momento no estoy disponible en este plan, pero puedo:</p>
-                      <ul className="mt-2.5 space-y-1.5 pl-4 text-left [list-style-type:disc] marker:text-violet-400">
-                        <li>Agendar pacientes por ti.</li>
-                        <li>Mejorar la redacción de tus fichas.</li>
-                        <li>Realizar bloqueos específicos.</li>
-                        <li>Responder tus dudas sobre la aplicación.</li>
-                        <li>Enviar recordatorios y correos.</li>
-                        <li>Entregarte reportes de tus agendas.</li>
-                        <li>Generar resúmenes diagnósticos.</li>
-                        <li>Y mucho más.</li>
-                      </ul>
-                      <p className="mt-3 border-t border-white/10 pt-3 font-semibold text-white/90">
-                        Para usarme, adquiere el plan MAX 🔥 de Agenda Clínica.
-                      </p>
-                    </div>
-                  ) : (
-                    item.content
-                  )}
+                  {item.content}
                 </div>
               ))}
+
               {isEvolving && (
                 <div
                   className="w-fit px-1 py-2"
@@ -221,12 +222,15 @@ export default function CortexAssistant() {
 
             <footer className="border-t border-white/[0.06] p-3">
               <form
-                onSubmit={handleSubmit}
+                onSubmit={(event)=>{
+                    event.preventDefault();
+                     llamarCortex(message);
+                }}
                 className={`cortex-input-aura relative isolate flex items-end gap-2 rounded-xl border border-white/[0.08] bg-white/[0.06] p-1.5 pl-3 transition ${
                   isEvolving ? "is-thinking" : ""
                 }`}
               >
-                <textarea
+                  <textarea
                   ref={inputRef}
                   value={message}
                   onChange={(event) => setMessage(event.target.value.slice(0, MAX_CHARS))}
@@ -265,7 +269,6 @@ export default function CortexAssistant() {
                 <p className="text-[9px] text-white/25">Shift + Enter para nueva línea</p>
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                  <span className="text-[9px] text-white/25">Todos los sistemas operativos</span>
                 </div>
               </div>
             </footer>

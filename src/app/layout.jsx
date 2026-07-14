@@ -89,6 +89,33 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const serviceWorkerScript = process.env.NODE_ENV === "production"
+    ? `
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').catch(function() {});
+        });
+      }
+    `
+    : `
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(registration) {
+            registration.unregister();
+          });
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          keys.filter(function(key) {
+            return key.startsWith('ac-shell-');
+          }).forEach(function(key) {
+            caches.delete(key);
+          });
+        });
+      }
+    `;
+
   return (
     <html lang="es" className={`${inter.variable} ${outfit.variable} ${lora.variable}`}>
       <body className="min-h-screen bg-white">
@@ -104,13 +131,7 @@ export default function RootLayout({ children }) {
             {children}
           </AnimatedLayout>
         </AgendaProvider>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js').catch(function() {});
-            });
-          }
-        `}} />
+        <script dangerouslySetInnerHTML={{ __html: serviceWorkerScript }} />
       </body>
     </html>
   );

@@ -284,8 +284,16 @@ export default function AgendaCitas() {
         return fechaReserva >= fechaInicio && fechaReserva <= fechaFinalizacion;
     }
 
+    function normalizarListaReservas(reservas) {
+        if (Array.isArray(reservas)) return reservas;
+        if (Array.isArray(reservas?.data)) return reservas.data;
+        if (Array.isArray(reservas?.message)) return reservas.message;
+        if (Array.isArray(reservas?.reservas)) return reservas.reservas;
+        return [];
+    }
+
     function aplicarFiltrosCombinados(reservas = []) {
-        return reservas.filter((reserva) => {
+        return normalizarListaReservas(reservas).filter((reserva) => {
             const coincideProfesional = !id_profesional || String(reserva?.id_profesional) === String(id_profesional);
             const coincideEstado = !estadoReserva || normalizarEstadoReserva(reserva?.estadoReserva) === normalizarEstadoReserva(estadoReserva);
             const coincideFecha = coincideConRangoFechas(reserva);
@@ -412,8 +420,9 @@ export default function AgendaCitas() {
                 return toast.error("Debe ingresar datos para filtrar.");
             } else {
                 const respuestaBackend = await res.json();
-                if (respuestaBackend.length > 0) {
-                    setdataLista(respuestaBackend);
+                const reservas = normalizarListaReservas(respuestaBackend);
+                if (reservas.length > 0) {
+                    setdataLista(reservas);
                     return toast.success("Similitud de RUT encontrada")
                 } else {
                     return toast.error("No se han encontrado similitudes")
@@ -441,8 +450,9 @@ export default function AgendaCitas() {
                 return toast.error("Debe ingresar datos para filtrar.");
             } else {
                 const respuestaBackend = await res.json();
-                if (respuestaBackend.length > 0) {
-                    setdataLista(respuestaBackend);
+                const reservas = normalizarListaReservas(respuestaBackend);
+                if (reservas.length > 0) {
+                    setdataLista(reservas);
                     return toast.success("Similitud de nombre encontrada")
                 } else {
                     return toast.error("No se han encontrado similitudes de nombres")
@@ -463,9 +473,10 @@ export default function AgendaCitas() {
             });
 
             const respuestaBackend = await res.json();
-            if (respuestaBackend) {
-                setDataListaBase(respuestaBackend);
-                setdataLista(respuestaBackend);
+            const reservas = normalizarListaReservas(respuestaBackend);
+            if (reservas) {
+                setDataListaBase(reservas);
+                setdataLista(reservas);
             }
         } catch (err) {
             console.log(err);
@@ -478,11 +489,12 @@ export default function AgendaCitas() {
     }, []);
 
     useEffect(() => {
-        if (!Array.isArray(dataListaBase) || dataListaBase.length === 0) {
-            setdataLista(dataListaBase);
+        const reservasBase = normalizarListaReservas(dataListaBase);
+        if (reservasBase.length === 0) {
+            setdataLista([]);
             return;
         }
-        setdataLista(aplicarFiltrosCombinados(dataListaBase));
+        setdataLista(aplicarFiltrosCombinados(reservasBase));
     }, [dataListaBase, id_profesional, fechaInicio, fechaFinalizacion, estadoReserva]);
 
     function normalizarEstadoReserva(estado = "") {
@@ -610,11 +622,12 @@ export default function AgendaCitas() {
     }
 
     function exportarAExcel() {
-        if (!dataLista || dataLista.length === 0) {
+        const reservasVisibles = normalizarListaReservas(dataLista);
+        if (reservasVisibles.length === 0) {
             return toast.error("No hay datos para exportar.");
         }
 
-        const datosExportar = dataLista.map((reserva) => ({
+        const datosExportar = reservasVisibles.map((reserva) => ({
             "Fecha": formatearFechaDashboard(reserva.fechaInicio),
             "Hora": formatearHoraDashboard(reserva.horaInicio),
             "Nombre Paciente": reserva.nombrePaciente || "",
@@ -717,14 +730,17 @@ export default function AgendaCitas() {
         );
     }
 
-    const resumenEstados = dataLista.reduce((acc, item) => {
+    const reservasVisibles = normalizarListaReservas(dataLista);
+
+    const resumenEstados = {confirmadas: 0, anuladas: 0, asiste: 0, finalizadas: 0};
+
+    for (const item of reservasVisibles) {
         const estado = normalizarEstadoReserva(item?.estadoReserva);
-        if (estado === "confirmada" || estado === "confirmado") acc.confirmadas += 1;
-        if (estado === "anulada" || estado === "anulado") acc.anuladas += 1;
-        if (estado === "asiste") acc.asiste += 1;
-        if (estado === "finalizado") acc.finalizadas += 1;
-        return acc;
-    }, {confirmadas: 0, anuladas: 0, asiste: 0, finalizadas: 0});
+        if (estado === "confirmada" || estado === "confirmado") resumenEstados.confirmadas += 1;
+        if (estado === "anulada" || estado === "anulado") resumenEstados.anuladas += 1;
+        if (estado === "asiste") resumenEstados.asiste += 1;
+        if (estado === "finalizado") resumenEstados.finalizadas += 1;
+    }
 
     return (
         <div className="min-h-screen bg-[#FAFAFB] flex flex-col">
@@ -746,7 +762,7 @@ export default function AgendaCitas() {
                     <div className="flex flex-wrap items-center gap-3">
                         <div className="h-16 px-6 rounded-2xl bg-white border border-slate-200 flex flex-col justify-center shadow-sm">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total Hoy</span>
-                            <span className="text-lg font-bold text-slate-900 mt-1 leading-none">{dataLista.length}</span>
+                            <span className="text-lg font-bold text-slate-900 mt-1 leading-none">{reservasVisibles.length}</span>
                         </div>
                         <div className="h-16 px-6 rounded-2xl bg-white border border-slate-200 flex flex-col justify-center shadow-sm">
                             <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest leading-none">Confirmadas</span>
@@ -855,7 +871,7 @@ export default function AgendaCitas() {
                         <div className="px-4 py-4 md:px-8 md:py-5 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
                             <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Citas Agendadas</h2>
                             <div className="flex items-center gap-3">
-                                <span className="text-[11px] font-bold text-slate-400">{dataLista.length} {dataLista.length === 1 ? "cita" : "citas"}</span>
+                                <span className="text-[11px] font-bold text-slate-400">{reservasVisibles.length} {reservasVisibles.length === 1 ? "cita" : "citas"}</span>
                                 <button
                                     onClick={exportarAExcel}
                                     className="h-8 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 transition-all flex items-center gap-1.5"
@@ -869,7 +885,7 @@ export default function AgendaCitas() {
 
                         {/* Vista móvil: tarjetas */}
                         <div className="xl:hidden px-4 py-4 sm:px-6">
-                            {dataLista.length === 0 ? (
+                            {reservasVisibles.length === 0 ? (
                                 <div className="py-20 text-center">
                                     <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -878,7 +894,7 @@ export default function AgendaCitas() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-                                    {dataLista.map((data) => (
+                                    {reservasVisibles.map((data) => (
                                         <article key={data.id_reserva} className="self-start overflow-visible rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="inline-flex items-center rounded-lg bg-slate-50 border border-slate-200 px-3 py-1.5 text-[13px] font-bold text-slate-900">
@@ -933,7 +949,7 @@ export default function AgendaCitas() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {dataLista.length === 0 ? (
+                                    {reservasVisibles.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={canSeeFichasClinicas ? 6 : 5} className="py-32 text-center">
                                                 <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -943,7 +959,7 @@ export default function AgendaCitas() {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        dataLista.map((reserva) => (
+                                        reservasVisibles.map((reserva) => (
                                             <TableRow key={reserva.id_reserva} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                                                 <TableCell className="py-6 pl-8">
                                                     <div className="flex flex-col">
