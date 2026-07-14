@@ -1,11 +1,7 @@
 "use client"
 import {useParams} from "next/navigation";
-<<<<<<< HEAD
 import {useState, useEffect, useRef, useMemo} from "react";
 import { useUser } from "@clerk/nextjs";
-=======
-import {useState, useEffect, useRef} from "react";
->>>>>>> 93cc53f (periodontograma)
 import {toast} from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -148,6 +144,7 @@ function sanitizarNombreArchivo(valor) {
 export default function Paciente() {
 
     const {id_paciente} = useParams();
+    const { user } = useUser();
     const [detallePaciente, setDetallePaciente] = useState([])
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
@@ -571,7 +568,6 @@ export default function Paciente() {
 
     const pacienteActual = detallePaciente[0];
     const totalFichas = listaFichas.length;
-<<<<<<< HEAD
 
     const listaFichasOrdenada = useMemo(() => {
         return [...listaFichas].sort((a, b) => new Date(b.fechaConsulta) - new Date(a.fechaConsulta));
@@ -587,9 +583,6 @@ export default function Paciente() {
         setFichasExpandidas(new Set([listaFichasOrdenada[0].id_ficha]));
     }, [listaFichasOrdenada, id_paciente]);
     const dashboardRole = getDashboardRoleFromUser(user);
-=======
-    const dashboardRole = getDashboardRoleFromUser(null);
->>>>>>> 93cc53f (periodontograma)
     const canSeeOdontograma = canAccessOdontograma(dashboardRole);
     const canSeeRecetaMedica = canAccessRecetasEnFicha(dashboardRole);
 
