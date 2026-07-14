@@ -1,7 +1,6 @@
 "use client"
 import {useParams} from "next/navigation";
 import {useState, useEffect, useRef, useMemo} from "react";
-import { useUser } from "@clerk/nextjs";
 import {toast} from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -144,7 +143,6 @@ function sanitizarNombreArchivo(valor) {
 export default function Paciente() {
 
     const {id_paciente} = useParams();
-    const { user } = useUser();
     const [detallePaciente, setDetallePaciente] = useState([])
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
@@ -582,7 +580,7 @@ export default function Paciente() {
         primeraExpansionRef.current = id_paciente;
         setFichasExpandidas(new Set([listaFichasOrdenada[0].id_ficha]));
     }, [listaFichasOrdenada, id_paciente]);
-    const dashboardRole = getDashboardRoleFromUser(user);
+    const dashboardRole = getDashboardRoleFromUser(null);
     const canSeeOdontograma = canAccessOdontograma(dashboardRole);
     const canSeeRecetaMedica = canAccessRecetasEnFicha(dashboardRole);
 

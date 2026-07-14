@@ -116,21 +116,28 @@ async function llamarCortex(mensajeUsuario){
             role="dialog"
             aria-modal="false"
             aria-labelledby="cortex-assistant-title"
-            className="cortex-glass-shell pointer-events-auto relative isolate flex h-[min(560px,calc(100vh-48px))] w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[28px] border border-white/70 bg-[rgba(239,244,255,0.62)] shadow-[0_30px_80px_-24px_rgba(29,42,77,0.46),0_8px_30px_-14px_rgba(73,91,145,0.22),inset_0_1px_0_rgba(255,255,255,0.96)] ring-1 ring-slate-900/[0.05] backdrop-blur-[34px] backdrop-saturate-[1.65] sm:w-[390px]"
+            className="cortex-glass-shell pointer-events-auto relative isolate flex h-[min(560px,calc(100vh-48px))] w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[28px] border border-white/50 bg-[rgba(239,244,255,0.24)] shadow-[0_30px_80px_-24px_rgba(29,42,77,0.46),0_8px_30px_-14px_rgba(73,91,145,0.22),inset_0_1px_0_rgba(255,255,255,0.68)] ring-1 ring-slate-900/[0.05] backdrop-blur-[44px] backdrop-saturate-[1.5] sm:w-[390px]"
           >
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-              <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 via-white/20 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/30 via-white/[0.06] to-transparent" />
               <div className="absolute -right-20 top-14 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(222,180,255,0.34)_0%,rgba(222,180,255,0.08)_48%,transparent_72%)] blur-2xl" />
               <div className="absolute -left-24 top-36 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(135,199,255,0.24)_0%,rgba(135,199,255,0.05)_54%,transparent_74%)] blur-2xl" />
-              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white/45 to-transparent" />
-              <div className="absolute inset-[1px] rounded-[27px] border border-white/35" />
+              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white/[0.16] to-transparent" />
+              <div className="absolute inset-[1px] rounded-[27px] border border-white/25" />
             </div>
 
-            <header className="relative z-10 flex items-center justify-between border-b border-white/55 bg-white/[0.16] px-4 py-3.5 backdrop-blur-xl">
-              <div className="flex items-center gap-3">
+            <header className="relative z-10 flex items-center justify-between gap-2 border-b border-white/35 bg-white/[0.06] px-4 py-3.5 backdrop-blur-xl">
+              <div className="flex min-w-0 flex-1 items-center gap-3.5">
                 <div
-                  className="relative h-14 w-14 rounded-full bg-transparent"
+                  className="relative shrink-0 overflow-hidden rounded-full"
                   style={{
+                    width: "52px",
+                    height: "52px",
+                    flexBasis: "52px",
+                    background:
+                      "radial-gradient(circle at 38% 34%, rgba(244,114,182,0.92) 0%, rgba(168,85,247,0.88) 27%, rgba(79,70,229,0.86) 58%, rgba(30,27,75,0.9) 78%, transparent 79%)",
+                    filter: "brightness(0.78) contrast(1.12) saturate(1.08)",
+                    boxShadow: "0 0 18px rgba(139,92,246,0.28)",
                     maskImage: "radial-gradient(circle, black 52%, transparent 72%)",
                     WebkitMaskImage: "radial-gradient(circle, black 52%, transparent 72%)",
                   }}
@@ -140,37 +147,42 @@ async function llamarCortex(mensajeUsuario){
                     className="absolute inset-0 h-full w-full rounded-full"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h2
                     id="cortex-assistant-title"
-                    className="text-[13px] font-bold tracking-[0.2em] text-[#15213d] antialiased"
-                    style={{ fontFamily: "var(--font-outfit)" }}
+                    className="text-[13px] font-black leading-tight tracking-[0.12em] text-gray-900 antialiased sm:text-[14px]"
+                    style={{
+                      fontFamily: "var(--font-michroma)",
+                      WebkitTextStroke: "0.55px #111827",
+                    }}
                   >
                     CORTEX A.I
                   </h2>
                   <p
-                    className="mt-1 text-[8px] font-semibold uppercase tracking-[0.28em] text-slate-500/70 antialiased"
+                    className="mt-1 whitespace-nowrap text-[5px] font-medium tracking-[0.14em] text-slate-400/85 antialiased sm:text-[6px]"
                     style={{ fontFamily: "var(--font-outfit)" }}
                   >
-                    Agente Inteligencia Artificial
+                    Artificial intelligence
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="ml-2 flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   aria-label="Minimizar CORTEX A.I"
-                  className="grid h-8 w-8 place-items-center rounded-xl border border-transparent text-slate-500 transition duration-200 hover:border-white/70 hover:bg-white/50 hover:text-slate-800 hover:shadow-[0_6px_18px_-8px_rgba(30,41,59,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/60"
+                  title="Minimizar"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-slate-300/70 bg-white/65 text-slate-700 shadow-sm transition duration-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/60"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-4 w-4" strokeWidth={2.4} />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   aria-label="Cerrar CORTEX A.I"
-                  className="grid h-8 w-8 place-items-center rounded-xl border border-transparent text-slate-500 transition duration-200 hover:border-white/70 hover:bg-white/50 hover:text-slate-800 hover:shadow-[0_6px_18px_-8px_rgba(30,41,59,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/60"
+                  title="Cerrar"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-transparent text-slate-500 transition duration-200 hover:border-white/70 hover:bg-white/50 hover:text-slate-800 hover:shadow-[0_6px_18px_-8px_rgba(30,41,59,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/60"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -228,7 +240,7 @@ async function llamarCortex(mensajeUsuario){
               <div ref={conversationEndRef} />
             </div>
 
-            <footer className="relative z-10 border-t border-white/55 bg-white/[0.14] p-3.5 backdrop-blur-2xl sm:p-4">
+            <footer className="relative z-10 border-t border-white/35 bg-white/[0.04] p-3.5 backdrop-blur-2xl sm:p-4">
               <form
                 onSubmit={(event)=>{
                     event.preventDefault();
@@ -273,11 +285,8 @@ async function llamarCortex(mensajeUsuario){
                   </button>
                 </div>
               </form>
-              <div className="mt-2.5 flex items-center justify-between px-1">
+              <div className="mt-2.5 px-1">
                 <p className="text-[9px] font-medium tracking-wide text-slate-500/70">Shift + Enter para nueva línea</p>
-                <div className="flex items-center gap-1.5" aria-label="CORTEX A.I disponible">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.12),0_0_10px_rgba(52,211,153,0.45)]" />
-                </div>
               </div>
             </footer>
           </section>

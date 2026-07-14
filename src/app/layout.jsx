@@ -1,7 +1,7 @@
 import "./globals.css";
 import { AnimatedLayout } from "@/Componentes/AnimatedLayout";
 import AgendaProvider from "@/ContextosGlobales/AgendaContext";
-import { Inter, Outfit, Lora } from "next/font/google";
+import { Inter, Lora, Michroma, Outfit } from "next/font/google";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,6 +20,12 @@ const lora = Lora({
   variable: "--font-lora",
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
+});
+
+const michroma = Michroma({
+  subsets: ["latin"],
+  variable: "--font-michroma",
+  weight: "400",
 });
 
 export const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://agendaclinica.cl");
@@ -117,7 +123,7 @@ export default function RootLayout({ children }) {
     `;
 
   return (
-    <html lang="es" className={`${inter.variable} ${outfit.variable} ${lora.variable}`}>
+    <html lang="es" className={`${inter.variable} ${outfit.variable} ${lora.variable} ${michroma.variable}`}>
       <body className="min-h-screen bg-white">
         {/*
           AgendaProvider DEBE envolver AnimatedLayout (no estar dentro).
