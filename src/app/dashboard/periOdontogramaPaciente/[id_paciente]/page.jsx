@@ -4,7 +4,6 @@ import React, {useEffect, useMemo, useState} from "react";
 import {useParams, useRouter} from "next/navigation";
 import {toast} from "react-hot-toast";
 import {
-    Activity,
     ArrowLeft,
     BadgePlus,
     CircleDot,
@@ -434,13 +433,13 @@ function GraficoPeriodontal() {
 
 function CampoDocumento({label, value, className = "", onChange, placeholder = ""}) {
     return (
-        <label className={`flex items-center gap-2 ${className}`}>
-            <span className="whitespace-nowrap text-[14px] font-normal text-black">{label}</span>
+        <label className={`group flex min-w-0 flex-col gap-1.5 ${className}`}>
+            <span className="truncate pl-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</span>
             <input
                 value={value || ""}
                 onChange={(evento) => onChange?.(evento.target.value)}
                 placeholder={placeholder}
-                className="h-7 min-w-0 flex-1 border border-red-400 bg-red-50 px-2 text-[14px] text-slate-700 outline-none"
+                className="h-11 min-w-0 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 text-[13px] font-semibold text-slate-700 shadow-[inset_0_1px_2px_rgba(15,23,42,0.025)] outline-none transition duration-200 placeholder:font-normal placeholder:text-slate-300 hover:border-slate-300 focus:border-[#6E56CF] focus:bg-white focus:ring-4 focus:ring-violet-100/70"
             />
         </label>
     );
@@ -448,15 +447,32 @@ function CampoDocumento({label, value, className = "", onChange, placeholder = "
 
 function CheckboxDocumento({label, checked = false, onChange}) {
     return (
-        <label className="flex items-center gap-1.5 text-[14px] text-black">
+        <label className="flex h-11 cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 text-[12px] font-semibold text-slate-600 transition duration-200 hover:border-violet-200 hover:bg-violet-50/40">
             <input
                 type="checkbox"
                 checked={checked}
                 onChange={(evento) => onChange?.(evento.target.checked)}
-                className="h-6 w-6 border border-slate-400"
+                className="h-4 w-4 rounded border-slate-300 text-[#6E56CF] accent-[#6E56CF] focus:ring-2 focus:ring-violet-200"
             />
             <span>{label}</span>
         </label>
+    );
+}
+
+function IconoDiente({className = "", strokeWidth = 2}) {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+            aria-hidden="true"
+        >
+            <path d="M12 2c-2.6 0-4.6 1.9-4.6 4.4 0 1.4.4 2.5.8 3.6.4 1.1.8 2.1.8 3.5 0 1.6-.6 2.5-1.1 3.4-.5.8-.9 1.6-.9 2.8 0 1.1.7 2 1.7 2 .9 0 1.3-.6 1.7-1.6.3-.8.6-1.9 1.6-1.9s1.3 1.1 1.6 1.9c.4 1 .8 1.6 1.7 1.6 1 0 1.7-.9 1.7-2 0-1.2-.4-2-.9-2.8-.5-.9-1.1-1.8-1.1-3.4 0-1.4.4-2.4.8-3.5.4-1.1.8-2.2.8-3.6C16.6 3.9 14.6 2 12 2z" />
+        </svg>
     );
 }
 
@@ -472,44 +488,57 @@ function CabeceraDocumento({paciente, idPaciente, periodontograma, actualizarCam
     const fechaHoy = formatearFechaDocumento();
 
     return (
-        <div className="mb-7">
-            <div className="grid grid-cols-[360px_1fr_240px] items-center gap-5">
-                <h1 className="text-[34px] font-black leading-none tracking-tight text-black">PERIODONTOGRAMA</h1>
-                <CampoDocumento
-                    label="ID del paciente"
-                    value={idPaciente ? `P-${idPaciente}` : ""}
-                    onChange={() => {}}
-                    placeholder="P-Nummer"
-                />
-                <CampoDocumento label="Fecha" value={fechaHoy} onChange={() => {}} className="justify-self-end" />
+        <div className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_-32px_rgba(15,23,42,0.32)]">
+            <div className="flex items-center justify-between gap-8 border-b border-slate-100 bg-slate-50/60 px-7 py-6">
+                <div>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6E56CF]">Registro clínico dental</p>
+                    <h1 className="text-[28px] font-black leading-none tracking-[-0.035em] text-slate-900">Periodontograma</h1>
+                </div>
+                <div className="flex items-center gap-2.5 border-l-2 border-emerald-500 py-1.5 pl-3">
+                    <IconoDiente className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
+                    <span className="text-[10px] font-bold uppercase leading-none tracking-[0.16em] text-slate-500">Registro activo</span>
+                </div>
             </div>
 
-            <div className="mt-7 grid grid-cols-[1fr_1fr_1fr] gap-6">
-                <CampoDocumento
-                    label="Apellidos del paciente"
-                    value={paciente?.apellido || ""}
-                    onChange={() => {}}
-                />
-                <CampoDocumento
-                    label="Nombre"
-                    value={paciente?.nombre || ""}
-                    onChange={() => {}}
-                />
-                <CampoDocumento
-                    label="Fecha de nacimiento"
-                    value={paciente?.nacimiento ? formatearFechaDocumento(new Date(paciente.nacimiento)) : fechaHoy}
-                    onChange={() => {}}
-                />
-            </div>
+            <div className="space-y-5 px-7 py-6">
+                <div className="grid grid-cols-[280px_1fr_190px] items-end gap-5">
+                    <CampoDocumento
+                        label="ID del paciente"
+                        value={idPaciente ? `P-${idPaciente}` : ""}
+                        onChange={() => {}}
+                        placeholder="P-0000"
+                    />
+                    <div aria-hidden="true" />
+                    <CampoDocumento label="Fecha" value={fechaHoy} onChange={() => {}} />
+                </div>
 
-            <div className="mt-5 grid grid-cols-[160px_1fr_1fr] items-center gap-6">
-                <CheckboxDocumento label="Examen inicial" />
-                <CheckboxDocumento label="Reevaluación" />
-                <CampoDocumento
-                    label="Clínico"
-                    value={periodontograma.profesionalResponsable}
-                    onChange={(valor) => actualizarCampoGeneral("profesionalResponsable", valor)}
-                />
+                <div className="grid grid-cols-[1.1fr_1fr_1fr] gap-5">
+                    <CampoDocumento
+                        label="Apellidos del paciente"
+                        value={paciente?.apellido || ""}
+                        onChange={() => {}}
+                    />
+                    <CampoDocumento
+                        label="Nombre"
+                        value={paciente?.nombre || ""}
+                        onChange={() => {}}
+                    />
+                    <CampoDocumento
+                        label="Fecha de nacimiento"
+                        value={paciente?.nacimiento ? formatearFechaDocumento(new Date(paciente.nacimiento)) : fechaHoy}
+                        onChange={() => {}}
+                    />
+                </div>
+
+                <div className="grid grid-cols-[190px_190px_1fr] items-end gap-5 border-t border-slate-100 pt-5">
+                    <CheckboxDocumento label="Examen inicial" />
+                    <CheckboxDocumento label="Reevaluación" />
+                    <CampoDocumento
+                        label="Clínico"
+                        value={periodontograma.profesionalResponsable}
+                        onChange={(valor) => actualizarCampoGeneral("profesionalResponsable", valor)}
+                    />
+                </div>
             </div>
         </div>
     );
@@ -737,36 +766,43 @@ export default function PeriOdontogramaPaciente() {
 
     if (cargando || !periodontograma) {
         return (
-            <div className="fixed inset-0 z-[100] min-h-screen overflow-auto bg-slate-100 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="fixed inset-0 z-[100] min-h-screen overflow-auto bg-[#FAFAFB] px-4 py-6 sm:px-6 lg:px-8">
                 <ToasterClient />
                 <div className="mx-auto flex max-w-7xl flex-col gap-5">
-                    <div className="h-28 animate-pulse rounded-2xl bg-white shadow-sm" />
-                    <div className="h-64 animate-pulse rounded-2xl bg-white shadow-sm" />
-                    <div className="h-64 animate-pulse rounded-2xl bg-white shadow-sm" />
+                    <div className="h-28 animate-pulse rounded-[28px] border border-slate-100 bg-white shadow-sm" />
+                    <div className="h-64 animate-pulse rounded-[28px] border border-slate-100 bg-white shadow-sm" />
+                    <div className="h-64 animate-pulse rounded-[28px] border border-slate-100 bg-white shadow-sm" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 z-[100] min-h-screen overflow-auto bg-slate-100 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="fixed inset-0 z-[100] min-h-screen overflow-auto bg-[#FAFAFB] px-4 py-6 sm:px-6 lg:px-8">
             <ToasterClient />
-            <div className="mx-auto flex min-h-full max-w-[1540px] flex-col items-center gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 shadow-sm">
-                    <div className="text-[12px] font-semibold text-slate-500">
-                        {paciente ? `${paciente.nombre || ""} ${paciente.apellido || ""}` : "Paciente"} · RUT {formatRut(paciente?.rut) || "-"} · Guardado {guardadoAutomatico || "sin cambios"}
+            <div className="mx-auto flex min-h-full max-w-[1540px] flex-col items-center gap-5">
+                <div className="flex w-full flex-wrap items-center justify-between gap-4 rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_12px_34px_-24px_rgba(15,23,42,0.25)]">
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Ficha del paciente</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-semibold text-slate-600">
+                            <span className="text-slate-900">{paciente ? `${paciente.nombre || ""} ${paciente.apellido || ""}` : "Paciente"}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>RUT {formatRut(paciente?.rut) || "-"}</span>
+                            <span className="text-slate-300">·</span>
+                            <span className="inline-flex items-center gap-1.5 text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Guardado {guardadoAutomatico || "sin cambios"}</span>
+                        </div>
                     </div>
                     <button
                         type="button"
                         onClick={volverCarpetaClinica}
-                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-700 px-5 text-sm font-black text-white shadow-sm transition hover:bg-violet-800"
+                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#6E56CF] px-4 text-[12px] font-bold text-white shadow-[0_10px_20px_-12px_rgba(91,69,188,0.9)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#5B45BC] focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-200"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Volver a fichas del paciente
                     </button>
                 </div>
 
-                <div className="w-full overflow-x-auto bg-white px-6 py-10 shadow-sm">
+                <div className="w-full overflow-x-auto rounded-[30px] border border-slate-200 bg-white px-6 py-8 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.3)] sm:px-8 sm:py-10">
                     <div
                         className="mx-auto"
                         style={{
