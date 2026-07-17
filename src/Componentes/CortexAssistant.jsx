@@ -180,7 +180,7 @@ async function llamarCortex(mensajeUsuario){
                     className="mt-1 whitespace-nowrap text-[5px] font-medium tracking-[0.14em] text-slate-400/85 antialiased sm:text-[6px]"
                     style={{ fontFamily: "var(--font-outfit)" }}
                   >
-                    Artificial intelligence
+                    Clinical Intelligence
                   </p>
                 </div>
               </div>
@@ -212,7 +212,7 @@ async function llamarCortex(mensajeUsuario){
               className="cortex-scrollbar relative z-10 flex-1 space-y-3.5 overflow-y-auto px-4 py-5 sm:px-5"
             >
               <div className="max-w-[88%] break-words rounded-[20px] rounded-tl-md border border-white/75 bg-white/45 px-4 py-3.5 text-[13px] leading-[1.65] text-slate-700 shadow-[0_14px_34px_-22px_rgba(35,52,91,0.42),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl">
-                Hola, soy el agente de IA de AgendaClínica. Haré todo el trabajo por ti, solo pídemelo.
+                Hola, soy la Inteligencia Artificial de AgendaClinica. Haré todo el trabajo por ti, solo pídemelo.
               </div>
 
               {mockConversation.map((item, index) => (
