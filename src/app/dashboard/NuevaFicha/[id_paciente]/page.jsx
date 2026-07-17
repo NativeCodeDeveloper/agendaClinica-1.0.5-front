@@ -1,16 +1,27 @@
 "use client"
 
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import {useState, useEffect} from "react";
 import {toast} from "react-hot-toast";
+import {AnimatePresence, motion, useReducedMotion} from "framer-motion";
+import {Check, CheckCheck, RefreshCw, X} from "lucide-react";
 import {Textarea} from "@/components/ui/textarea";
 import ShadcnDatePicker from "@/Componentes/shadcnDatePicker";
 import ToasterClient from "@/Componentes/ToasterClient";
 import Link from "next/link";
 import {ShadcnInput} from "@/Componentes/shadcnInput";
-import {ShadcnButton} from "@/Componentes/shadcnButton";
-import {useRouter} from "next/navigation";
 import { formatRut } from "@/lib/designTokens";
+
+const GRADIENTE_CORTEX = "linear-gradient(100deg, #f472b6 0%, #c084fc 22%, #60a5fa 45%, #22d3ee 64%, #818cf8 82%, #f472b6 100%)";
+
+const ESTILO_BORDE_CORTEX = {
+    padding: "2px",
+    backgroundImage: GRADIENTE_CORTEX,
+    backgroundSize: "300% 100%",
+    WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+    WebkitMaskComposite: "xor",
+    maskComposite: "exclude"
+};
 
 function transformarPlantilla(filas) {
     if (!filas || filas.length === 0) return null
@@ -44,6 +55,160 @@ function transformarPlantilla(filas) {
     }
 }
 
+function CampoClinicoAnimado({
+    campo,
+    valor,
+    onChange,
+    procesando,
+    bloqueado,
+    soloLectura,
+    version,
+    sugerencia,
+    accionesBloqueadas,
+    onReemplazar,
+    onGenerarVariacion,
+    onDescartar
+}) {
+    const reducirMovimiento = useReducedMotion();
+    const resaltarCortex = procesando || Boolean(sugerencia);
+    const transicionTexto = reducirMovimiento
+        ? {duration: 0}
+        : {duration: 0.42, ease: [0.22, 1, 0.36, 1]};
+
+    return (
+        <div>
+            <label
+                htmlFor={`campo-clinico-${campo.id_campo}`}
+                className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500"
+            >
+                {campo.nombre}
+                {campo.requerido === 1 && <span className="ml-1 text-red-400 normal-case">*</span>}
+            </label>
+
+            <div className="relative isolate rounded-md">
+                <AnimatePresence initial={false} mode="popLayout">
+                    <motion.div
+                        key={version}
+                        initial={reducirMovimiento ? false : {opacity: 0, y: 8, filter: "blur(2px)"}}
+                        animate={{opacity: 1, y: 0, filter: "blur(0px)"}}
+                        exit={reducirMovimiento
+                            ? {opacity: 0}
+                            : {opacity: 0, y: -8, filter: "blur(2px)"}
+                        }
+                        transition={transicionTexto}
+                        className="relative z-10 rounded-md bg-white"
+                    >
+                        <Textarea
+                            id={`campo-clinico-${campo.id_campo}`}
+                            className="min-h-[100px] resize-y border-slate-200 focus:border-[#6E56CF] focus:ring-violet-100 disabled:opacity-80"
+                            value={valor}
+                            onChange={onChange}
+                            placeholder={`Ingrese ${campo.nombre.toLowerCase()}...`}
+                            disabled={bloqueado}
+                            readOnly={soloLectura}
+                            aria-busy={procesando}
+                        />
+                    </motion.div>
+                </AnimatePresence>
+
+                <AnimatePresence initial={false}>
+                    {resaltarCortex && (
+                        <motion.span
+                            key="resplandor-cortex"
+                            initial={{opacity: 0}}
+                            animate={{
+                                opacity: reducirMovimiento ? 0.32 : [0.22, 0.52, 0.28],
+                                backgroundPosition: reducirMovimiento ? "50% 50%" : ["0% 50%", "100% 50%", "0% 50%"]
+                            }}
+                            exit={{
+                                opacity: 0,
+                                transition: {duration: reducirMovimiento ? 0 : 0.25}
+                            }}
+                            transition={reducirMovimiento
+                                ? {duration: 0}
+                                : {
+                                    opacity: {duration: 3.6, ease: "easeInOut", repeat: Infinity},
+                                    backgroundPosition: {duration: 5.2, ease: "linear", repeat: Infinity}
+                                }
+                            }
+                            style={{
+                                backgroundImage: GRADIENTE_CORTEX,
+                                backgroundSize: "300% 100%"
+                            }}
+                            className="pointer-events-none absolute -inset-2 z-0 rounded-xl blur-lg"
+                            aria-hidden="true"
+                        />
+                    )}
+                    {resaltarCortex && (
+                        <motion.span
+                            key="borde-cortex"
+                            initial={{opacity: 0}}
+                            animate={{
+                                opacity: 1,
+                                backgroundPosition: reducirMovimiento ? "50% 50%" : ["0% 50%", "100% 50%", "0% 50%"]
+                            }}
+                            exit={{
+                                opacity: 0,
+                                transition: {duration: reducirMovimiento ? 0 : 0.25}
+                            }}
+                            transition={reducirMovimiento
+                                ? {duration: 0}
+                                : {
+                                    opacity: {duration: 0.2},
+                                    backgroundPosition: {duration: 5.2, ease: "linear", repeat: Infinity}
+                                }
+                            }
+                            style={ESTILO_BORDE_CORTEX}
+                            className="pointer-events-none absolute -inset-[2px] z-20 rounded-[7px]"
+                            aria-hidden="true"
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
+
+            <AnimatePresence initial={false}>
+                {sugerencia && (
+                    <motion.div
+                        initial={reducirMovimiento ? false : {opacity: 0, y: -5}}
+                        animate={{opacity: 1, y: 0}}
+                        exit={reducirMovimiento ? {opacity: 0} : {opacity: 0, y: -5}}
+                        transition={{duration: reducirMovimiento ? 0 : 0.24}}
+                        className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end"
+                    >
+                        <button
+                            type="button"
+                            onClick={onDescartar}
+                            disabled={accionesBloqueadas}
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <X className="h-3.5 w-3.5" aria-hidden="true" />
+                            No usar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onGenerarVariacion}
+                            disabled={accionesBloqueadas}
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-[#6E56CF] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <RefreshCw className={`h-3.5 w-3.5 ${procesando ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true" />
+                            Generar otra variación
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onReemplazar}
+                            disabled={accionesBloqueadas}
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-[#6E56CF] px-3.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#5B47B0] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                            Reemplazar texto
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
 export default function NuevaFicha() {
 
     const {id_paciente} = useParams();
@@ -65,6 +230,11 @@ export default function NuevaFicha() {
     const [plantillaCompleta, setPlantillaCompleta] = useState(null)
     const [datosDinamicos, setDatosDinamicos] = useState({})
     const [mejorandoRedaccion, setMejorandoRedaccion] = useState(false)
+    const [camposProcesando, setCamposProcesando] = useState(() => new Set())
+    const [versionesTexto, setVersionesTexto] = useState({})
+    const [sugerenciasCortex, setSugerenciasCortex] = useState({})
+    const cantidadSugerenciasCortex = Object.keys(sugerenciasCortex).length
+    const haySugerenciasCortex = cantidadSugerenciasCortex > 0
 
     // Cargar lista de plantillas al montar
     async function listarPlantillas() {
@@ -85,6 +255,9 @@ export default function NuevaFicha() {
         setIdPlantilla(id_plantilla)
         setDatosDinamicos({})
         setPlantillaCompleta(null)
+        setCamposProcesando(new Set())
+        setVersionesTexto({})
+        setSugerenciasCortex({})
 
         if (!id_plantilla) return
 
@@ -111,22 +284,9 @@ export default function NuevaFicha() {
         }
     }
 
-    async function mejorarRedaccionConCortex() {
-        const camposConTexto = plantillaCompleta?.categorias.flatMap((categoria) =>
-            categoria.campos
-                .map((campo) => ({
-                    id: String(campo.id_campo),
-                    nombre: campo.nombre,
-                    texto: datosDinamicos[campo.id_campo] || ""
-                }))
-                .filter((campo) => campo.texto.trim())
-        ) || [];
-
-        if (camposConTexto.length === 0) {
-            return toast.error("Complete al menos un campo antes de mejorar la redacción.");
-        }
-
+    async function solicitarMejoraConCortex(camposConTexto, esVariacion = false) {
         setMejorandoRedaccion(true);
+        setCamposProcesando(new Set(camposConTexto.map((campo) => campo.id)));
 
         try {
             const res = await fetch(`${API}/cortex/mejorar-redaccion-ficha`, {
@@ -157,23 +317,116 @@ export default function NuevaFicha() {
                 throw new Error("Cortex no devolvió campos válidos para reemplazar.");
             }
 
-            const valoresMejorados = Object.fromEntries(
+            const valoresSugeridos = Object.fromEntries(
                 camposMejorados.map((campo) => [String(campo.id), campo.texto.trim()])
             );
 
-            setDatosDinamicos((prev) => ({...prev, ...valoresMejorados}));
+            setVersionesTexto((prev) => {
+                const siguientesVersiones = {...prev};
+                camposMejorados.forEach((campo) => {
+                    const idCampo = String(campo.id);
+                    siguientesVersiones[idCampo] = (siguientesVersiones[idCampo] || 0) + 1;
+                });
+                return siguientesVersiones;
+            });
+            setSugerenciasCortex((prev) => ({...prev, ...valoresSugeridos}));
+
+            if (esVariacion) {
+                return toast.success("Cortex generó otra variación.");
+            }
+
             return toast.success(
-                `Cortex mejoró la redacción de ${camposMejorados.length} ${camposMejorados.length === 1 ? "campo" : "campos"}.`
+                `Cortex preparó ${camposMejorados.length} ${camposMejorados.length === 1 ? "propuesta" : "propuestas"}.`
             );
         } catch (error) {
             return toast.error(error.message || "No se pudo mejorar la redacción en este momento.");
         } finally {
             setMejorandoRedaccion(false);
+            setCamposProcesando(new Set());
         }
+    }
+
+    async function mejorarRedaccionConCortex() {
+        const camposConTexto = plantillaCompleta?.categorias.flatMap((categoria) =>
+            categoria.campos
+                .map((campo) => ({
+                    id: String(campo.id_campo),
+                    nombre: campo.nombre,
+                    texto: datosDinamicos[campo.id_campo] || ""
+                }))
+                .filter((campo) => campo.texto.trim())
+        ) || [];
+
+        if (camposConTexto.length === 0) {
+            return toast.error("Complete al menos un campo antes de mejorar la redacción.");
+        }
+
+        return solicitarMejoraConCortex(camposConTexto);
+    }
+
+    async function generarVariacionDiferente(campo) {
+        const idCampo = String(campo.id_campo);
+        const textoBase = sugerenciasCortex[idCampo] || datosDinamicos[campo.id_campo] || "";
+
+        if (!textoBase.trim()) {
+            return toast.error("No hay texto para generar otra variación.");
+        }
+
+        return solicitarMejoraConCortex([{
+            id: idCampo,
+            nombre: campo.nombre,
+            texto: textoBase
+        }], true);
+    }
+
+    function reemplazarTextoConSugerencia(idCampo) {
+        const idNormalizado = String(idCampo);
+        const sugerencia = sugerenciasCortex[idNormalizado];
+
+        if (!sugerencia) return;
+
+        setDatosDinamicos((prev) => ({...prev, [idNormalizado]: sugerencia}));
+        setSugerenciasCortex((prev) => {
+            const siguientesSugerencias = {...prev};
+            delete siguientesSugerencias[idNormalizado];
+            return siguientesSugerencias;
+        });
+        toast.success("Texto reemplazado con la propuesta de Cortex.");
+    }
+
+    function reemplazarTodasLasSugerencias() {
+        if (!haySugerenciasCortex) return;
+
+        setDatosDinamicos((prev) => ({...prev, ...sugerenciasCortex}));
+        setSugerenciasCortex({});
+        toast.success(
+            `${cantidadSugerenciasCortex} ${cantidadSugerenciasCortex === 1 ? "texto reemplazado" : "textos reemplazados"} con Cortex.`
+        );
+    }
+
+    function descartarSugerenciaCortex(idCampo) {
+        const idNormalizado = String(idCampo);
+
+        if (!sugerenciasCortex[idNormalizado]) return;
+
+        setVersionesTexto((prev) => ({
+            ...prev,
+            [idNormalizado]: (prev[idNormalizado] || 0) + 1
+        }));
+        setSugerenciasCortex((prev) => {
+            const siguientesSugerencias = {...prev};
+            delete siguientesSugerencias[idNormalizado];
+            return siguientesSugerencias;
+        });
+        toast.success("Se mantuvo el texto original.");
     }
 
     async function insertarFicha() {
         try {
+            if (haySugerenciasCortex) {
+                return toast.error("Debe resolver las propuestas de Cortex antes de guardar la ficha.")
+            }
+
             if (!id_paciente) {
                 return toast.error('Debe seleccionar un paciente para ingresar una nueva ficha.')
             }
@@ -250,6 +503,7 @@ export default function NuevaFicha() {
                 setDatosDinamicos({});
                 setIdPlantilla("");
                 setPlantillaCompleta(null);
+                setSugerenciasCortex({});
                 return toast.success("Nueva ficha ingresada con Exito!");
             } else {
                 return toast.error("Faltan datos para ingresar la nueva ficha.");
@@ -450,21 +704,31 @@ export default function NuevaFicha() {
                                 <h3 className="text-sm font-semibold text-slate-800">{categoria.nombre}</h3>
                             </div>
                             <div className="p-6 space-y-5">
-                                {categoria.campos.map(campo => (
-                                    <div key={campo.id_campo}>
-                                        <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                                            {campo.nombre}
-                                            {campo.requerido === 1 && <span className="text-red-400 ml-1 normal-case">*</span>}
-                                        </label>
-                                        <Textarea
-                                            className="min-h-[100px] resize-y border-slate-200 focus:border-[#6E56CF] focus:ring-violet-100"
-                                            value={datosDinamicos[campo.id_campo] || ""}
-                                            onChange={(e) => setDatosDinamicos(prev => ({ ...prev, [campo.id_campo]: e.target.value }))}
-                                            placeholder={`Ingrese ${campo.nombre.toLowerCase()}...`}
-                                            disabled={mejorandoRedaccion}
+                                {categoria.campos.map(campo => {
+                                    const idCampo = String(campo.id_campo);
+                                    const sugerencia = sugerenciasCortex[idCampo] || "";
+
+                                    return (
+                                        <CampoClinicoAnimado
+                                            key={campo.id_campo}
+                                            campo={campo}
+                                            valor={sugerencia || datosDinamicos[campo.id_campo] || ""}
+                                            onChange={(e) => setDatosDinamicos(prev => ({
+                                                ...prev,
+                                                [campo.id_campo]: e.target.value
+                                            }))}
+                                            procesando={camposProcesando.has(idCampo)}
+                                            bloqueado={mejorandoRedaccion}
+                                            soloLectura={Boolean(sugerencia)}
+                                            version={versionesTexto[idCampo] || 0}
+                                            sugerencia={sugerencia}
+                                            accionesBloqueadas={mejorandoRedaccion}
+                                            onReemplazar={() => reemplazarTextoConSugerencia(idCampo)}
+                                            onGenerarVariacion={() => generarVariacionDiferente(campo)}
+                                            onDescartar={() => descartarSugerenciaCortex(idCampo)}
                                         />
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
@@ -487,7 +751,7 @@ export default function NuevaFicha() {
                         <button
                             type="button"
                             onClick={mejorarRedaccionConCortex}
-                            disabled={!hayCamposParaMejorar || mejorandoRedaccion}
+                            disabled={!hayCamposParaMejorar || mejorandoRedaccion || haySugerenciasCortex}
                             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-5 py-2.5 text-sm font-semibold text-[#6E56CF] shadow-sm transition-all hover:border-violet-300 hover:bg-violet-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 sm:mr-auto sm:w-auto"
                         >
                             {mejorandoRedaccion ? (
@@ -499,6 +763,17 @@ export default function NuevaFicha() {
                             )}
                             {mejorandoRedaccion ? "Cortex está mejorando..." : "Mejorar redacción con Cortex"}
                         </button>
+                        {haySugerenciasCortex && (
+                            <button
+                                type="button"
+                                onClick={reemplazarTodasLasSugerencias}
+                                disabled={mejorandoRedaccion}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#6E56CF] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#5B47B0] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                            >
+                                <CheckCheck className="h-4 w-4" aria-hidden="true" />
+                                Reemplazar todo ({cantidadSugerenciasCortex})
+                            </button>
+                        )}
                         <Link href="/dashboard/FichaClinica">
                             <button className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
                                 Cancelar
@@ -506,8 +781,8 @@ export default function NuevaFicha() {
                         </Link>
                         <button
                             onClick={() => insertarFicha()}
-                            disabled={mejorandoRedaccion}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#6E56CF] hover:bg-[#5B47B0] rounded-xl transition-all shadow-sm"
+                            disabled={mejorandoRedaccion || haySugerenciasCortex}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#6E56CF] hover:bg-[#5B47B0] rounded-xl transition-all shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
