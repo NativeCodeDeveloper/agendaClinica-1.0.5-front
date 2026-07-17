@@ -32,6 +32,7 @@ export const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https:/
 const metadataImage = "/Copia%20de%20logoagendaclinica.png";
 
 export const metadata = {
+  metadataBase,
   title: {
     default: "Agenda Clínica | Sistema de Agendamiento Médico Online",
     template: "%s | Agenda Clínica",
@@ -123,7 +124,7 @@ export default function RootLayout({ children }) {
     `;
 
   return (
-    <html lang="es" className={`${inter.variable} ${outfit.variable} ${lora.variable} ${michroma.variable}`}>
+    <html lang="es" data-scroll-behavior="smooth" className={`${inter.variable} ${outfit.variable} ${lora.variable} ${michroma.variable}`}>
       <body className="min-h-screen bg-white">
         {/*
           AgendaProvider DEBE envolver AnimatedLayout (no estar dentro).

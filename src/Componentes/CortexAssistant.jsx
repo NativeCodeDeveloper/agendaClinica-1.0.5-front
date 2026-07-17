@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
 import { Minus, Send, X } from "lucide-react";
 
 const InteractiveNebulaOrb = dynamic(
@@ -66,43 +67,60 @@ export default function CortexAssistant() {
 
 
 async function llamarCortex(mensajeUsuario){
+    const mensajeLimpio = mensajeUsuario.trim();
 
-    if(!mensajeUsuario){
-        return;
+    if(!mensajeLimpio || isEvolving){
+        return
     }
 
-    setMockConversation((current) => [
-        ...current,
-        { role: "user", content: mensajeUsuario }
-    ]);
+    const conversacionActualizada = [
+        ...mockConversation,
+        {
+            role: "user",
+            content: mensajeLimpio
+        }
+    ];
 
+    setMockConversation(conversacionActualizada);
     setMessage("");
     setIsEvolving(true);
 
-    const respuestaCortex = await fetch(`${API}/cortex/mensaje`,{
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "mensaje": [
-              {
-                  role: "user", content: mensajeUsuario
-              }
-          ]
-        })
-    });
+    try {
+        const respuestaCortex = await fetch(`${API}/cortex/mensaje`,{
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              "mensaje": conversacionActualizada
+            })
+        });
 
-    const data = await respuestaCortex.json();
+        const data = await respuestaCortex.json().catch(() => null);
 
-    if(data){
+        if(!respuestaCortex.ok){
+            throw new Error(data?.message || "CORTEX no pudo responder en este momento.");
+        }
+
+        if(!data?.respuesta){
+            throw new Error("CORTEX no entregó una respuesta válida.");
+        }
+
+        setMockConversation((current) => [
+            ...current,
+            { role: "assistant", content: data.respuesta }
+        ]);
+    } catch (error) {
+        setMockConversation((current) => [
+            ...current,
+            {
+                role: "assistant",
+                content: error.message || "No fue posible conectar con CORTEX. Intenta nuevamente."
+            }
+        ]);
+    } finally {
         setIsEvolving(false);
     }
-
-    setMockConversation((current) => [
-        ...current,
-        { role: "Cortex", content: data.respuesta }
-    ]);
 }
 
 
@@ -206,7 +224,27 @@ async function llamarCortex(mensajeUsuario){
                       : "rounded-tl-md border border-white/75 bg-white/45 text-slate-700 shadow-[0_14px_34px_-22px_rgba(35,52,91,0.42),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl"
                   }`}
                 >
-                  {item.content}
+                  {item.role === "assistant" ? (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        ol: ({ children }) => (
+                          <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>
+                        ),
+                        li: ({ children }) => <li className="pl-1">{children}</li>,
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-slate-900">{children}</strong>
+                        ),
+                      }}
+                    >
+                      {item.content}
+                    </ReactMarkdown>
+                  ) : (
+                    item.content
+                  )}
                 </div>
               ))}
 

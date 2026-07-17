@@ -64,6 +64,7 @@ export default function NuevaFicha() {
     const [idPlantilla, setIdPlantilla] = useState("")
     const [plantillaCompleta, setPlantillaCompleta] = useState(null)
     const [datosDinamicos, setDatosDinamicos] = useState({})
+    const [mejorandoRedaccion, setMejorandoRedaccion] = useState(false)
 
     // Cargar lista de plantillas al montar
     async function listarPlantillas() {
@@ -107,6 +108,67 @@ export default function NuevaFicha() {
         } catch (error) {
             console.log(error)
             return toast.error("Error al cargar la plantilla.")
+        }
+    }
+
+    async function mejorarRedaccionConCortex() {
+        const camposConTexto = plantillaCompleta?.categorias.flatMap((categoria) =>
+            categoria.campos
+                .map((campo) => ({
+                    id: String(campo.id_campo),
+                    nombre: campo.nombre,
+                    texto: datosDinamicos[campo.id_campo] || ""
+                }))
+                .filter((campo) => campo.texto.trim())
+        ) || [];
+
+        if (camposConTexto.length === 0) {
+            return toast.error("Complete al menos un campo antes de mejorar la redacción.");
+        }
+
+        setMejorandoRedaccion(true);
+
+        try {
+            const res = await fetch(`${API}/cortex/mejorar-redaccion-ficha`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({campos: camposConTexto})
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                throw new Error(data.message || "Cortex no pudo mejorar la redacción.");
+            }
+
+            const idsPermitidos = new Set(camposConTexto.map((campo) => campo.id));
+            const camposMejorados = Array.isArray(data.campos)
+                ? data.campos.filter((campo) =>
+                    idsPermitidos.has(String(campo?.id)) &&
+                    typeof campo?.texto === "string" &&
+                    campo.texto.trim()
+                )
+                : [];
+
+            if (camposMejorados.length === 0) {
+                throw new Error("Cortex no devolvió campos válidos para reemplazar.");
+            }
+
+            const valoresMejorados = Object.fromEntries(
+                camposMejorados.map((campo) => [String(campo.id), campo.texto.trim()])
+            );
+
+            setDatosDinamicos((prev) => ({...prev, ...valoresMejorados}));
+            return toast.success(
+                `Cortex mejoró la redacción de ${camposMejorados.length} ${camposMejorados.length === 1 ? "campo" : "campos"}.`
+            );
+        } catch (error) {
+            return toast.error(error.message || "No se pudo mejorar la redacción en este momento.");
+        } finally {
+            setMejorandoRedaccion(false);
         }
     }
 
@@ -236,6 +298,9 @@ export default function NuevaFicha() {
     }, [id_paciente]);
 
     const paciente = dataPaciente[0] ?? null;
+    const hayCamposParaMejorar = Object.values(datosDinamicos).some(
+        (valor) => typeof valor === "string" && valor.trim()
+    );
 
     return (
         <div className="min-h-screen bg-[#FAFAFB]">
@@ -345,6 +410,7 @@ export default function NuevaFicha() {
                             <select
                                 value={idPlantilla}
                                 onChange={(e) => seleccionarPlantilla(e.target.value)}
+                                disabled={mejorandoRedaccion}
                                 className="w-full h-10 px-3.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-100 focus:border-[#6E56CF] transition-all text-slate-700"
                                 style={{ colorScheme: "light" }}
                             >
@@ -395,6 +461,7 @@ export default function NuevaFicha() {
                                             value={datosDinamicos[campo.id_campo] || ""}
                                             onChange={(e) => setDatosDinamicos(prev => ({ ...prev, [campo.id_campo]: e.target.value }))}
                                             placeholder={`Ingrese ${campo.nombre.toLowerCase()}...`}
+                                            disabled={mejorandoRedaccion}
                                         />
                                     </div>
                                 ))}
@@ -416,7 +483,22 @@ export default function NuevaFicha() {
                     )}
 
                     {/* Botones */}
-                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 border-t border-slate-100 px-6 py-5 bg-slate-50/50">
+                    <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-5 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            onClick={mejorarRedaccionConCortex}
+                            disabled={!hayCamposParaMejorar || mejorandoRedaccion}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-5 py-2.5 text-sm font-semibold text-[#6E56CF] shadow-sm transition-all hover:border-violet-300 hover:bg-violet-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 sm:mr-auto sm:w-auto"
+                        >
+                            {mejorandoRedaccion ? (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#6E56CF]" aria-hidden="true" />
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" />
+                                </svg>
+                            )}
+                            {mejorandoRedaccion ? "Cortex está mejorando..." : "Mejorar redacción con Cortex"}
+                        </button>
                         <Link href="/dashboard/FichaClinica">
                             <button className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
                                 Cancelar
@@ -424,6 +506,7 @@ export default function NuevaFicha() {
                         </Link>
                         <button
                             onClick={() => insertarFicha()}
+                            disabled={mejorandoRedaccion}
                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#6E56CF] hover:bg-[#5B47B0] rounded-xl transition-all shadow-sm"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
