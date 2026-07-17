@@ -213,6 +213,8 @@ function FormSection({
   mode,
   popupForm,
   onPopupFormChange,
+  buscandoPacienteRut = false,
+  estadoBusquedaRut = "",
   selectionDraft,
   actualizarHora,
   actualizarFecha,
@@ -307,6 +309,46 @@ function FormSection({
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-600 mb-2">
             Datos del paciente
           </p>
+          <div>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className={labelClass}>RUT</label>
+              <label className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-violet-500">
+                <input
+                  type="checkbox"
+                  checked={popupForm.rut === "RUT DESCONOCIDO"}
+                  onChange={(e) => onPopupFormChange("rut", e.target.checked ? "RUT DESCONOCIDO" : "")}
+                  className="h-3.5 w-3.5 accent-violet-500"
+                />
+                Rut Desconocido
+              </label>
+            </div>
+            <RutInput
+              value={popupForm.rut}
+              onChange={(clean) => onPopupFormChange("rut", clean)}
+              disabled={popupForm.rut === "RUT DESCONOCIDO"}
+            />
+            {buscandoPacienteRut && (
+              <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-violet-600">
+                <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" aria-hidden="true" />
+                Buscando paciente...
+              </p>
+            )}
+            {!buscandoPacienteRut && estadoBusquedaRut === "encontrado" && (
+              <p className="mt-1 text-[11px] font-medium text-emerald-600">
+                Paciente encontrado. Datos cargados.
+              </p>
+            )}
+            {!buscandoPacienteRut && estadoBusquedaRut === "no-encontrado" && (
+              <p className="mt-1 text-[11px] font-medium text-violet-400">
+                Paciente <span className="text-violet-600">NO</span> encontrado en base de datos
+              </p>
+            )}
+            {!buscandoPacienteRut && estadoBusquedaRut === "error" && (
+              <p className="mt-1 text-[11px] font-medium text-violet-400">
+                Paciente <span className="text-violet-600">NO</span> encontrado en base de datos
+              </p>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={labelClass}>Nombre</label>
@@ -326,13 +368,6 @@ function FormSection({
                 placeholder="Apellido"
               />
             </div>
-          </div>
-          <div>
-            <label className={labelClass}>RUT</label>
-            <RutInput
-              value={popupForm.rut}
-              onChange={(clean) => onPopupFormChange("rut", clean)}
-            />
           </div>
           <div>
             <label className={labelClass}>Teléfono</label>
@@ -550,6 +585,8 @@ export function AppointmentDrawer({
   // popupForm ahora incluye: prestacion y modalidad además de los campos base
   popupForm = { nombrePaciente: "", apellidoPaciente: "", rut: "", telefono: "", email: "", motivoBloqueo: "", prestacion: "", modalidad: "presencial" },
   onPopupFormChange,
+  buscandoPacienteRut = false,
+  estadoBusquedaRut = "",
   actualizarHora,
   actualizarFecha,
   formatHora,
@@ -634,6 +671,8 @@ export function AppointmentDrawer({
               mode={mode}
               popupForm={popupForm}
               onPopupFormChange={onPopupFormChange}
+              buscandoPacienteRut={buscandoPacienteRut}
+              estadoBusquedaRut={estadoBusquedaRut}
               selectionDraft={selectionDraft}
               actualizarHora={actualizarHora}
               actualizarFecha={actualizarFecha}

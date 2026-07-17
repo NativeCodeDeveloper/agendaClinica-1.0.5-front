@@ -58,6 +58,7 @@ function CalendarioContent() {
     const popupRef = useRef(null);
     const popupDragStateRef = useRef({ dragging: false, offsetX: 0, offsetY: 0 });
     const selectionGuardRef = useRef({ missingProfessional: false, overlap: false, past: false, outOfHours: false });
+    const buscarRutRequestRef = useRef(0);
 
     useEffect(() => {
         const style = document.createElement('style');
@@ -328,27 +329,7 @@ function CalendarioContent() {
     const [popupMode, setPopupMode] = useState("create");
     const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
     const [draggingPopup, setDraggingPopup] = useState(false);
-    // ══════════════════════════════════════════════════════════════════════════
-    // GUÍA DE MIGRACIÓN BD — ejecutar en la base de datos para activar
-    // los campos "tipo de consulta" y "modalidad" en las reservas.
-    //
-    // PASO 1 — Agregar columnas a la tabla de reservaciones:
-    //   ALTER TABLE reservaciones
-    //     ADD COLUMN nombre_prestacion VARCHAR(255) NULL COMMENT 'Tipo de consulta seleccionado al agendar',
-    //     ADD COLUMN modalidad VARCHAR(20) NOT NULL DEFAULT 'presencial' COMMENT 'presencial | online';
-    //
-    // PASO 2 — Actualizar el endpoint POST /reservaPacientes/insertarReserva para aceptar:
-    //   { ..., nombre_prestacion: string|null, modalidad: 'presencial'|'online' }
-    //   y guardarlos en la fila insertada.
-    //
-    // PASO 3 — Actualizar POST /reservaPacientes/actualizarReservacion igual que arriba.
-    //
-    // PASO 4 — Retornar ambos campos en los endpoints de consulta:
-    //   SELECT ..., nombre_prestacion, modalidad FROM reservaciones ...
-    //   en: seleccionarReservados, seleccionarPorProfesional, seleccionarEspecifica
-    //
-    // Una vez hecha la migración, eliminar este comentario o moverlo a la documentación.
-    // ══════════════════════════════════════════════════════════════════════════
+
 
     const [popupForm, setPopupForm] = useState({
         nombrePaciente: "",
@@ -362,6 +343,8 @@ function CalendarioContent() {
         monto_reserva: "",
         motivo_reserva: "",
     });
+    const [buscandoPacienteRut, setBuscandoPacienteRut] = useState(false);
+    const [estadoBusquedaRut, setEstadoBusquedaRut] = useState("");
 
     // Lista de prestaciones/servicios para el dropdown del drawer
     const [listaPrestaciones, setListaPrestaciones] = useState([]);
@@ -643,7 +626,106 @@ function CalendarioContent() {
         return obtenerNombreProfesionalPorId(profesionalId, "");
     }
 
+    function limpiarDatosPacienteFormulario(prev) {
+        return {
+            ...prev,
+            nombrePaciente: "",
+            apellidoPaciente: "",
+            telefono: "",
+            email: "",
+        };
+    }
+
+    async function buscarPacientePorRut(rut) {
+        const rutNormalizado = String(rut ?? "")
+            .replace(/[^0-9kK]/g, "")
+            .toUpperCase();
+
+        if (rutNormalizado.length !== 9) return;
+
+        const requestId = buscarRutRequestRef.current + 1;
+        buscarRutRequestRef.current = requestId;
+        setBuscandoPacienteRut(true);
+        setEstadoBusquedaRut("");
+
+        try {
+            const res = await fetch(`${API}/pacientes/buscarRutEspecifico`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({rut: rutNormalizado}),
+                mode: "cors",
+            });
+
+            if (requestId !== buscarRutRequestRef.current) return;
+
+            const data = await res.json().catch(() => null);
+            const pacienteEncontrado = Array.isArray(data) ? data[0] : data;
+
+            if (!res.ok || !pacienteEncontrado) {
+                setPopupForm((prev) => limpiarDatosPacienteFormulario(prev));
+                setEstadoBusquedaRut(res.status === 400 ? "no-encontrado" : "error");
+                return;
+            }
+
+            setPopupForm((prev) => ({
+                ...prev,
+                rut: pacienteEncontrado.rut ?? rutNormalizado,
+                nombrePaciente: pacienteEncontrado.nombre ?? "",
+                apellidoPaciente: pacienteEncontrado.apellido ?? "",
+                telefono: pacienteEncontrado.telefono ?? "",
+                email: pacienteEncontrado.correo ?? "",
+            }));
+            setEstadoBusquedaRut("encontrado");
+        } catch (error) {
+            if (requestId !== buscarRutRequestRef.current) return;
+            console.log("No se pudo buscar el paciente por RUT:", error);
+            setPopupForm((prev) => limpiarDatosPacienteFormulario(prev));
+            setEstadoBusquedaRut("error");
+        } finally {
+            if (requestId === buscarRutRequestRef.current) {
+                setBuscandoPacienteRut(false);
+            }
+        }
+    }
+
+    function actualizarPopupForm(field, value) {
+        setPopupForm((prev) => {
+            if (field !== "rut") {
+                return {...prev, [field]: value};
+            }
+
+            const rutNormalizado = String(value ?? "")
+                .replace(/[^0-9kK]/g, "")
+                .toUpperCase();
+
+            return rutNormalizado.length < 9
+                ? limpiarDatosPacienteFormulario({...prev, rut: value})
+                : {...prev, rut: value};
+        });
+
+        if (field !== "rut") return;
+
+        const rutNormalizado = String(value ?? "")
+            .replace(/[^0-9kK]/g, "")
+            .toUpperCase();
+
+        if (rutNormalizado.length !== 9) {
+            buscarRutRequestRef.current += 1;
+            setBuscandoPacienteRut(false);
+            setEstadoBusquedaRut("");
+            return;
+        }
+
+        buscarPacientePorRut(rutNormalizado);
+    }
+
     function limpiarSeleccionTemporal() {
+        buscarRutRequestRef.current += 1;
+        setBuscandoPacienteRut(false);
+        setEstadoBusquedaRut("");
         setSelectionPreview(null);
         setSelectionDraft(null);
         setFloatingDraft(null);
@@ -2531,7 +2613,9 @@ function CalendarioContent() {
                         id_profesional={id_profesional}
                         selectionDraft={selectionDraft}
                         popupForm={popupForm}
-                        onPopupFormChange={(field, value) => setPopupForm((prev) => ({ ...prev, [field]: value }))}
+                        onPopupFormChange={actualizarPopupForm}
+                        buscandoPacienteRut={buscandoPacienteRut}
+                        estadoBusquedaRut={estadoBusquedaRut}
                         actualizarHora={actualizarHoraSeleccionDraft}
                         actualizarFecha={actualizarFechaSeleccionDraft}
                         formatHora={formatHoraCorta}

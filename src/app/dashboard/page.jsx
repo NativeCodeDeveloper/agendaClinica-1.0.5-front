@@ -153,6 +153,17 @@ export default function AgendaCitas() {
             .toUpperCase();
     }
 
+    function esRutDesconocido(rutValor) {
+        const rutTexto = String(rutValor || "").trim().toUpperCase();
+        return [
+            "",
+            "RUT DESCONOCIDO",
+            "SIN REGISTRO",
+            "RUT: SIN REGISTRO",
+            "NO INDICADO"
+        ].includes(rutTexto) || !/\d/.test(rutTexto);
+    }
+
     function formatearRutVisible(rutValor) {
         const rutNormalizado = normalizarRut(rutValor);
         return rutNormalizado ? `RUT: ${rutNormalizado}` : "RUT: Sin registro";
@@ -223,6 +234,10 @@ export default function AgendaCitas() {
     }
 
     async function crearPacienteDesdeReserva(reserva) {
+        if (esRutDesconocido(reserva?.rut)) {
+            throw new Error("Para crear una ficha clínica se necesita el RUT o número de identificación del paciente");
+        }
+
         const rutNormalizado = normalizarRut(reserva?.rut);
         const telefonoNormalizado = String(reserva?.telefono || "").trim() || "NO INDICADO";
         const correoNormalizado = String(reserva?.email || "").trim() || null;
@@ -342,8 +357,8 @@ export default function AgendaCitas() {
                 return toast.error("Tu perfil no tiene acceso a fichas clínicas.");
             }
 
-            if (!reserva?.rut) {
-                return toast.error("No se ha podido identificar al paciente de esta reserva");
+            if (esRutDesconocido(reserva?.rut)) {
+                return toast.error("Para ingresar al paciente en el sistema y generar una ficha se debe conocer su RUT o número de identificación.");
             }
 
             setAbriendoFichaReservaId(reserva.id_reserva);
@@ -367,6 +382,9 @@ export default function AgendaCitas() {
             router.push(`/dashboard/NuevaFicha/${nuevoPaciente.id_paciente}`);
         } catch (error) {
             console.log(error);
+            if (esRutDesconocido(reserva?.rut)) {
+                return toast.error("Para ingresar al paciente en el sistema y generar una ficha se debe conocer su RUT o número de identificación.");
+            }
             return toast.error("No se ha podido abrir o crear la ficha clinica de este paciente");
         } finally {
             setAbriendoFichaReservaId(null);
