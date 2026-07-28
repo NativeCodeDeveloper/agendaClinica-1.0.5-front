@@ -179,6 +179,10 @@ export default function Paciente() {
         router.push(`/dashboard/periOdontogramaPaciente/${id_paciente}`);
     }
 
+    function verPresupuestoPaciente() {
+        router.push(`/dashboard/cotizacionesPaciente/${id_paciente}`);
+    }
+
     function editarFichaClinica(id_ficha) {
         router.push(`/dashboard/EdicionFicha/${id_ficha}`);
     }
@@ -969,6 +973,14 @@ export default function Paciente() {
                                     <span className="text-[13px] font-bold text-slate-700">Odontograma</span>
                                 </button>
                             )}
+                            <button onClick={verPresupuestoPaciente} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                                <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l2 2 4-4m-8.5 8h11a2.5 2.5 0 002.5-2.5v-11A2.5 2.5 0 0017.5 4h-11A2.5 2.5 0 004 6.5v11A2.5 2.5 0 006.5 20zM8 8h8" />
+                                    </svg>
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-700">Presupuesto Paciente</span>
+                            </button>
                             {canSeeOdontograma && (
                                 <button onClick={verPeriodontograma} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                     <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
