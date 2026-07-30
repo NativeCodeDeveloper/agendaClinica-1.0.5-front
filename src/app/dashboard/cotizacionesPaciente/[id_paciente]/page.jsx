@@ -4,7 +4,11 @@ import {useEffect, useState} from "react";
 import {useParams, useRouter} from "next/navigation";
 import {
     ArrowLeft,
+    CalendarDays,
+    ChevronRight,
+    CircleDollarSign,
     ClipboardPlus,
+    Clock3,
     FileText,
     Mail,
     Phone,
@@ -22,9 +26,11 @@ function estadosLetra_interpretacion(estado_backend){
         case 1:
             return { etiqueta: "Activa", clases: "border-violet-200 bg-violet-50 text-violet-700" }
         case 2:
-            return { etiqueta: "Tratamiento en curso", clases: "border-sky-200 bg-sky-50 text-sky-700" }
+            return { etiqueta: "Tratamiento en Curso", clases: "border-sky-200 bg-sky-50 text-sky-700" }
         case 3:
-            return { etiqueta: "Tratamiento finalizado", clases: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+            return { etiqueta: "Tratamiento Finalizado", clases: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+        case 4:
+            return { etiqueta: "Tratamiento Abandonado", clases: "border-red-200 bg-red-50 text-red-700" }
         default:
             return { etiqueta: "Sin estado", clases: "border-slate-200 bg-slate-50 text-slate-600" }
     }
@@ -272,11 +278,9 @@ function formatearFechaHora(fechaISO) {
                if(success){
                    await  buscarPaciente(id_paciente);
                    return toast.success(`Cotizacion eliminada!`);
-
                }else{
                    return toast.error(`No se ha podido eliminar cotizacion. Intente mas tarde`);
                }
-
            }catch (error) {
                return toast.error(`Ha ocurrido un error en el servidor. Contacte a soporte`);
            }
@@ -351,7 +355,62 @@ function formatearFechaHora(fechaISO) {
 
 
 
-    return (
+
+
+
+       async function cambiarEstado(
+           estado_cotizacion,
+           id_cotizacion_paciente
+       ) {
+           try {
+
+               const res = await fetch(`${API}/cotizacionPaciente/actualizarEstado`,{
+                   method: "POST",
+                   headers: {
+                       Accept: "application/json",
+                       "Content-Type": "application/json",
+                   },
+                   body: JSON.stringify({
+                       estado_cotizacion,
+                       id_cotizacion_paciente
+                   }),
+                   mode: "cors",
+                   cache: "no-cache"
+               })
+
+               if (!res.ok) {
+                   return toast.error(`No se ha podido actualizar el estado de la cotizacion`);
+               }
+
+               const respuestaActualizacion = await res.json();
+
+               if (respuestaActualizacion.message === true) {
+                   await buscarPaciente(id_paciente);
+                   actualizarVisibilidadFormulario(false);
+                   return toast.success(`Cotizacion Actualizada!`);
+               }
+
+               if (respuestaActualizacion.message === false) {
+                   return toast.error(`Actualizar el estado de la cotizacion`);
+               }
+
+               if (respuestaActualizacion.message === `sindata`) {
+                   return toast.error(`Faltan datos para actualizar la cotizacion`);
+               }
+
+               else{
+                   return toast.error(`Ha ocurrido un error contacte a soporte`);
+               }
+
+           }catch (error) {
+               console.log(error);
+               return toast.error(`Ha ocurrido un error en servidor contacte a soporte`);
+           }
+       }
+
+
+
+       return (
         <div className="min-h-screen bg-[#FAFAFB] text-slate-900">
             <Toaster></Toaster>
             <div className="mx-auto w-full max-w-[1600px] px-4 py-6 md:px-8 md:py-10 2xl:max-w-none">
@@ -570,65 +629,138 @@ function formatearFechaHora(fechaISO) {
                             {cotizacionesPaciente.map((cotizacion) => {
                                 const estadoActual = estadosLetra_interpretacion(cotizacion.estado_cotizacion);
 
-
                                 return (
                                     <article
                                         key={cotizacion.id_cotizacion_paciente}
-                                        className="overflow-hidden rounded-lg border border-slate-200 border-l-4 border-l-[#6E56CF] bg-white shadow-sm transition-shadow hover:shadow-md"
+                                        className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_12px_30px_rgba(79,70,229,0.09)]"
                                     >
-                                        <div className="p-4 sm:p-5">
-                                            <div className="mb-4 flex min-w-0 flex-wrap items-center gap-2 border-b border-slate-100 pb-3 text-[#6E56CF]">
-                                                <Stethoscope className="h-4 w-4 shrink-0"/>
-                                                <p className="min-w-0 flex-1 text-[13px] font-bold leading-snug sm:text-[14px]">
-                                                    {cotizacion.profesional_solicitante_nombre}
-                                                </p>
-                                                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                                        ID Cotización: <span className="font-mono text-slate-600">{cotizacion.id_cotizacion_paciente}</span>
-                                                    </span>
-                                                    <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold  ${estadoActual.clases}`}>
-                                                        {estadoActual.etiqueta}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4 xl:grid-cols-[minmax(220px,1.4fr)_minmax(115px,0.8fr)_minmax(150px,1fr)_minmax(100px,0.7fr)] xl:items-center">
-                                                <div className="col-span-2 flex min-w-0 items-start gap-3 sm:col-span-4 xl:col-span-1">
-                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-[#6E56CF]">
+                                        <div className="h-1 bg-gradient-to-r from-[#6E56CF] via-violet-400 to-sky-400"/>
+
+                                        <div className="p-5 sm:p-6">
+                                            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                                                <div className="flex min-w-0 items-start gap-4">
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 text-[#6E56CF] transition-colors group-hover:bg-[#6E56CF] group-hover:text-white">
                                                         <FileText className="h-5 w-5"/>
                                                     </div>
+
                                                     <div className="min-w-0">
-                                                        <h3 className="break-words text-[15px] font-bold leading-snug text-slate-900">
+                                                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                                                            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-slate-500">
+                                                                COT-{cotizacion.id_cotizacion_paciente}
+                                                            </span>
+                                                            <span className={`rounded-md border px-2 py-1 text-[10px] font-bold ${estadoActual.clases}`}>
+                                                                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current align-middle"/>
+                                                                {estadoActual.etiqueta}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="break-words text-[17px] font-bold leading-snug text-slate-900 sm:text-lg">
                                                             {cotizacion.nombre_cotizacion}
                                                         </h3>
+                                                        <p className="mt-1 text-[12px] leading-relaxed text-slate-500">
+                                                            Propuesta de tratamiento y presupuesto clínico.
+                                                        </p>
                                                     </div>
                                                 </div>
 
-                                                <div>
-                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Fecha creación</p>
-                                                    <p className="mt-1 text-[12px] font-semibold text-slate-700">{formatearFechaHora(cotizacion.fecha_creacion)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Última modificación</p>
-                                                    <p className="mt-1 text-[12px] font-semibold text-slate-700">{formatearFechaHora(cotizacion.fecha_actualizacion)}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Total</p>
-                                                    <p className="mt-1 text-[13px] font-bold text-[#6E56CF]">{formatearMonto(cotizacion.total_presupuesto_cotizado)}</p>
+                                                <div className="flex min-w-[190px] items-center gap-3 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white px-4 py-3 lg:justify-end">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#6E56CF] shadow-sm">
+                                                        <CircleDollarSign className="h-4 w-4"/>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                                                            Total cotizado
+                                                        </p>
+                                                        <p className="mt-1 text-lg font-extrabold leading-none text-[#6E56CF]">
+                                                            {formatearMonto(cotizacion.total_presupuesto_cotizado)}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="mt-4 flex w-full flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+
+                                            <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3">
+                                                <div className="flex min-w-0 items-center gap-3 rounded-lg bg-slate-50/80 px-3 py-3">
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#6E56CF] shadow-sm">
+                                                        <Stethoscope className="h-4 w-4"/>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                                            Profesional solicitante
+                                                        </p>
+                                                        <p className="mt-1 truncate text-[12px] font-bold text-slate-700">
+                                                            {cotizacion.profesional_solicitante_nombre}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex min-w-0 items-center gap-3 rounded-lg bg-slate-50/80 px-3 py-3">
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm">
+                                                        <CalendarDays className="h-4 w-4"/>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                                            Fecha de creación
+                                                        </p>
+                                                        <p className="mt-1 text-[12px] font-semibold text-slate-700">
+                                                            {formatearFechaHora(cotizacion.fecha_creacion)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex min-w-0 items-center gap-3 rounded-lg bg-slate-50/80 px-3 py-3">
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm">
+                                                        <Clock3 className="h-4 w-4"/>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                                            Última modificación
+                                                        </p>
+                                                        <p className="mt-1 text-[12px] font-semibold text-slate-700">
+                                                            {formatearFechaHora(cotizacion.fecha_actualizacion)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6 xl:flex-row xl:items-end xl:justify-between">
+                                            <label className="block w-full xl:max-w-[310px]">
+                                                <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                                                    Cambiar estado de la cotización
+                                                </span>
+                                                {/* UI ONLY: conectar onChange con el servicio que actualiza esta cotización. */}
+                                                <select
+                                                    name={`estado_cotizacion_${cotizacion.id_cotizacion_paciente}`}
+                                                    defaultValue={String(cotizacion.estado_cotizacion ?? "")}
+                                                    onChange={(e) => cambiarEstado( e.target.value ,cotizacion.id_cotizacion_paciente,)}
+                                                    data-cotizacion-id={cotizacion.id_cotizacion_paciente}
+                                                    aria-label={`Cambiar estado de la cotización ${cotizacion.id_cotizacion_paciente}`}
+                                                    className="h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 text-[12px] font-semibold text-slate-700 shadow-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                                                >
+                                                    <option value="" disabled>Seleccionar estado</option>
+                                                    <option value="1">Activa</option>
+                                                    <option value="2">Tratamiento en curso</option>
+                                                    <option value="3">Tratamiento finalizado</option>
+                                                    <option value="4">Tratamiento abandonado</option>
+                                                </select>
+                                                <span className="mt-1.5 block text-[10px] text-slate-400">
+                                                    Seguimiento administrativo del tratamiento.
+                                                </span>
+                                            </label>
+
+                                            <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto xl:justify-end">
                                                 <button
                                                     type="button"
                                                     onClick={() => router.push(`/dashboard/detalleCotizacion/${cotizacion.id_cotizacion_paciente}`)}
-                                                    className="flex h-9 w-full items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 px-4 text-[11px] font-bold text-slate-600 transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-[#6E56CF] sm:w-auto"
+                                                    className="flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-violet-200 bg-white px-4 text-[11px] font-bold text-[#6E56CF] shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 sm:w-auto"
                                                     aria-label={`Ver detalle de la cotización ${cotizacion.id_cotizacion_paciente}`}
                                                 >
                                                     Ver detalle
+                                                    <ChevronRight className="h-3.5 w-3.5"/>
                                                 </button>
                                                 <button
                                                     onClick={()=> eliminarCotizacion(cotizacion.id_cotizacion_paciente)}
                                                     type="button"
-                                                    className="flex h-9 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-100 sm:w-auto"
+                                                    className="flex h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-rose-200 bg-white px-4 text-[11px] font-bold text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50 sm:w-auto"
                                                     aria-label={`Eliminar la cotización ${cotizacion.id_cotizacion_paciente}`}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5 shrink-0"/>
