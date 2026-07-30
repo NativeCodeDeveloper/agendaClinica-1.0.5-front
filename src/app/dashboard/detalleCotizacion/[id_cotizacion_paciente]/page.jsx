@@ -120,6 +120,7 @@ export default function DetalleCotizacion() {
     const [fechaEmisionPDF, setFechaEmisionPDF] = useState(obtenerFechaLocalActual);
     const [enviandoCotizacionCorreo, setEnviandoCotizacionCorreo] = useState(false);
     const [envioCotizacionCorreoConfirmado, setEnvioCotizacionCorreoConfirmado] = useState(false);
+    const [observacionesDetalle, setObservacionesDetalle] = useState("");
     const envioCotizacionCorreoEnCursoRef = useRef(false);
 
     async function cargarDatosEmpresaCotizacion() {
@@ -180,6 +181,7 @@ export default function DetalleCotizacion() {
             const cotizaciones = Array.isArray(data) ? data : data ? [data] : [];
             const cotizacion = cotizaciones[0] ?? null;
             const abonoRecibido = cotizacion?.abono_paciente;
+            const observacionesDetalle = cotizacion?.observacionesDetalleCotizacion;
 
             setCotizacionSeleccionada(cotizaciones);
             setAbonoPaciente(
@@ -187,6 +189,7 @@ export default function DetalleCotizacion() {
                     ? null
                     : Math.max(0, Number(abonoRecibido) || 0)
             );
+            setObservacionesDetalle(observacionesDetalle);
 
         }catch(error) {
             return toast.error(`Ocurrio un problema en el servidor por favor contacte a soporte.`);
@@ -200,6 +203,8 @@ export default function DetalleCotizacion() {
             return;
         }
     }, [id_cotizacion_paciente]);
+
+
 
 
 
@@ -469,6 +474,7 @@ export default function DetalleCotizacion() {
                 Math.max(0, Number(abono_paciente) || 0),
                 totalNormalizado
             );
+
             const totalCalculado = totalNormalizado - abonoNormalizado;
 
             const res = await fetch(`${API}/cotizacionPaciente/actualizarTotal`,{
@@ -629,6 +635,59 @@ export default function DetalleCotizacion() {
 
 
 
+    async function actualizarObservacion(
+        observacionesDetalleCotizacion,
+        id_cotizacion_paciente
+    ) {
+        try {
+
+            if(!observacionesDetalleCotizacion || !id_cotizacion_paciente) {
+                return toast.error(`Debe seleccionar una cotizacion especifica y llenar el campo de observacion con una observacion (No se admiten Campos Vacios)`);
+            }
+
+
+            const res = await fetch(`${API}/cotizacionPaciente/actualizarObservacion`,{
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({
+                    observacionesDetalleCotizacion,
+                    id_cotizacion_paciente
+                }),
+                mode: "cors",
+                cache: "no-store"
+            })
+
+            if(!res.ok) {
+                return toast.error(`Ocurrió un error al actualizar la observación. Consulte a soporte técnico.`);
+            }
+
+            const respuestaBackend = await res.json();
+
+            if(respuestaBackend.message === true) {
+                return toast.success(`Observación actualizada !`);
+            }
+            if(respuestaBackend.message === false) {
+                return toast.error(`No se pudo actualizar la observación. Consulte a soporte técnico.`);
+            }
+            if(respuestaBackend.message === `sindata`) {
+                return toast.error(`No se pudo actualizar la observación. Falta informacion.`);
+            }else {
+                return toast.error(`No se pudo actualizar la observación. Consulte a soporte técnico.`);
+            }
+        }catch(error) {
+            return toast.error(`Ocurrió un error al actualizar la observación. Consulte a soporte técnico.`);
+        }
+    }
+
+
+
+
+
+
+
     //************************************************************************************************************************
 
 
@@ -736,6 +795,15 @@ export default function DetalleCotizacion() {
     }, [detalleCotizacionArray]);
 
     const cotizacionActual = cotizacionSeleccionada[0] ?? null;
+
+    function volverACarpetaPaciente() {
+        if (cotizacionActual?.id_paciente) {
+            router.push(`/dashboard/FichasPacientes/${cotizacionActual.id_paciente}`);
+            return;
+        }
+
+        router.back();
+    }
 
     function volverACotizaciones() {
         if (cotizacionActual?.id_paciente) {
@@ -1001,16 +1069,29 @@ export default function DetalleCotizacion() {
             <Toaster/>
             <div className="mx-auto w-full max-w-[1600px] px-4 py-6 md:px-8 md:py-10 2xl:max-w-none">
                 <header className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                    <div className="flex items-start gap-3 sm:gap-4">
-                        <button
-                            type="button"
-                            onClick={volverACotizaciones}
-                            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-[#6E56CF]"
-                            title="Volver a las cotizaciones"
-                            aria-label="Volver a las cotizaciones"
-                        >
-                            <ArrowLeft className="h-4 w-4"/>
-                        </button>
+                    <div className="min-w-0">
+                        <div className="mb-5 flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+                            <button
+                                type="button"
+                                onClick={volverACarpetaPaciente}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#6E56CF] px-4 text-xs font-bold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-[#5F46C5] hover:shadow-xl hover:shadow-violet-200 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2"
+                                title="Volver a la carpeta del paciente"
+                                aria-label="Volver a la carpeta del paciente"
+                            >
+                                <UserRound className="h-4 w-4"/>
+                                Volver a la carpeta del paciente
+                            </button>
+                            <button
+                                type="button"
+                                onClick={volverACotizaciones}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-4 text-xs font-bold text-[#6E56CF] shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2"
+                                title="Volver a cotizaciones"
+                                aria-label="Volver a cotizaciones"
+                            >
+                                <ArrowLeft className="h-4 w-4"/>
+                                Volver a cotizaciones
+                            </button>
+                        </div>
                         <div>
                             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#6E56CF]">
                                 Presupuesto del paciente
@@ -1024,7 +1105,7 @@ export default function DetalleCotizacion() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 pl-[52px] sm:pl-14 xl:items-end xl:pl-0">
+                    <div className="flex flex-col gap-3 xl:items-end">
                         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                             <label className="flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm sm:w-auto">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -1111,6 +1192,34 @@ export default function DetalleCotizacion() {
                             </div>
                         </dl>
                     ))}
+                </section>
+
+                <section className="mb-6 rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                    <label className="block">
+                        <span className="mb-2 block text-xs font-semibold text-slate-700">
+                            Observaciones
+                        </span>
+                        <textarea
+                            value={observacionesDetalle}
+                            onChange={(evento) => setObservacionesDetalle(evento.target.value)}
+                            placeholder="Escribe observaciones generales sobre esta cotización"
+                            aria-label="Observaciones generales de la cotización"
+                            className="min-h-24 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] leading-relaxed text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#6E56CF] focus:ring-2 focus:ring-violet-100"
+                        />
+                        <span className="mt-1.5 block text-[10px] text-slate-400">
+                            Añade notas generales relacionadas con el presupuesto o tratamiento.
+                        </span>
+                    </label>
+                    <div className="mt-4 flex justify-end">
+                        <button
+                            onClick={() => actualizarObservacion(observacionesDetalle, id_cotizacion_paciente)}
+                            type="button"
+                            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#6E56CF] px-5 text-xs font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-[#5F46C5] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 sm:w-auto"
+                        >
+                            <Save className="h-4 w-4" aria-hidden="true"/>
+                            Guardar observación
+                        </button>
+                    </div>
                 </section>
 
                 <div className="space-y-8">
