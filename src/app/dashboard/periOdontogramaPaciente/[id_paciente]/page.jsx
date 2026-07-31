@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {useParams, useRouter} from "next/navigation";
 import {toast} from "react-hot-toast";
 import {
@@ -559,7 +559,7 @@ function BarraResumenDocumento({resumen}) {
 
 function PeriodontogramaLamina({periodontograma, actualizarSitio, actualizarDiente, resumen}) {
     return (
-        <section className="overflow-x-auto bg-white py-4">
+        <section className="bg-white py-4">
             <div
                 className="mx-auto font-[Arial]"
                 style={{
@@ -595,6 +595,11 @@ export default function PeriOdontogramaPaciente() {
     const [periodontograma, setPeriodontograma] = useState(null);
     const [guardadoAutomatico, setGuardadoAutomatico] = useState("");
 
+    const medidorLaminaRef = useRef(null);
+    const contenidoLaminaRef = useRef(null);
+    const [escalaLamina, setEscalaLamina] = useState(1);
+    const [alturaLaminaNatural, setAlturaLaminaNatural] = useState(0);
+
     const claveAlmacenamiento = useMemo(() => {
         return id_paciente ? `periodontograma_paciente_${id_paciente}` : "";
     }, [id_paciente]);
@@ -603,6 +608,29 @@ export default function PeriOdontogramaPaciente() {
         if (!periodontograma) return null;
         return obtenerResumen(periodontograma);
     }, [periodontograma]);
+
+    useLayoutEffect(() => {
+        if (cargando || !periodontograma) return;
+
+        function recalcularEscalaLamina() {
+            const anchoDisponible = medidorLaminaRef.current?.clientWidth || ANCHO_LAMINA_PERIODONTAL;
+            setEscalaLamina(Math.min(1, anchoDisponible / ANCHO_LAMINA_PERIODONTAL));
+            if (contenidoLaminaRef.current) {
+                setAlturaLaminaNatural(contenidoLaminaRef.current.offsetHeight);
+            }
+        }
+
+        recalcularEscalaLamina();
+
+        const observador = new ResizeObserver(recalcularEscalaLamina);
+        if (medidorLaminaRef.current) observador.observe(medidorLaminaRef.current);
+        window.addEventListener("resize", recalcularEscalaLamina);
+
+        return () => {
+            observador.disconnect();
+            window.removeEventListener("resize", recalcularEscalaLamina);
+        };
+    }, [cargando]);
 
     async function cargarDatosPaciente(idPaciente) {
         try {
@@ -795,35 +823,45 @@ export default function PeriOdontogramaPaciente() {
                     <button
                         type="button"
                         onClick={volverCarpetaClinica}
-                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#6E56CF] px-4 text-[12px] font-bold text-white shadow-[0_10px_20px_-12px_rgba(91,69,188,0.9)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#5B45BC] focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-200"
+                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-bold text-slate-600 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Volver a fichas del paciente
                     </button>
                 </div>
 
-                <div className="w-full overflow-x-auto rounded-[30px] border border-slate-200 bg-white px-6 py-8 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.3)] sm:px-8 sm:py-10">
-                    <div
-                        className="mx-auto"
-                        style={{
-                            width: `${ANCHO_LAMINA_PERIODONTAL}px`,
-                            minWidth: `${ANCHO_LAMINA_PERIODONTAL}px`,
-                        }}
-                    >
-                        <CabeceraDocumento
-                            paciente={paciente}
-                            idPaciente={id_paciente}
-                            periodontograma={periodontograma}
-                            actualizarCampoGeneral={actualizarCampoGeneral}
-                        />
-                        <PeriodontogramaLamina
-                            periodontograma={periodontograma}
-                            actualizarSitio={actualizarSitio}
-                            actualizarDiente={actualizarDiente}
-                            resumen={resumen}
-                        />
+                <div className="w-full overflow-hidden rounded-[30px] border border-slate-200 bg-white px-3 py-8 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.3)] sm:px-8 sm:py-10">
+                    <div ref={medidorLaminaRef} className="flex w-full justify-center">
+                        <div style={{height: alturaLaminaNatural ? `${alturaLaminaNatural * escalaLamina}px` : undefined}}>
+                            <div
+                                ref={contenidoLaminaRef}
+                                style={{
+                                    width: `${ANCHO_LAMINA_PERIODONTAL}px`,
+                                    transform: `scale(${escalaLamina})`,
+                                    transformOrigin: "top center",
+                                }}
+                            >
+                                <CabeceraDocumento
+                                    paciente={paciente}
+                                    idPaciente={id_paciente}
+                                    periodontograma={periodontograma}
+                                    actualizarCampoGeneral={actualizarCampoGeneral}
+                                />
+                                <PeriodontogramaLamina
+                                    periodontograma={periodontograma}
+                                    actualizarSitio={actualizarSitio}
+                                    actualizarDiente={actualizarDiente}
+                                    resumen={resumen}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {escalaLamina < 1 && (
+                    <p className="text-center text-[11px] font-semibold text-slate-400">
+                        Vista ajustada al ancho de pantalla ({Math.round(escalaLamina * 100)}%). Usa una pantalla más grande para ver el detalle a tamaño completo.
+                    </p>
+                )}
             </div>
         </div>
     );

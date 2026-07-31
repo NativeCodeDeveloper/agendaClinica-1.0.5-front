@@ -20,19 +20,41 @@ import {
     X
 } from "lucide-react";
 import {toast, Toaster} from "react-hot-toast";
+import formatearFecha from "@/FuncionesTranversales/funcionesTranversales.js";
+
+function calcularEdadPaciente(fechaNacimiento) {
+    if (!fechaNacimiento) return "-";
+    const nacimiento = new Date(fechaNacimiento);
+    if (Number.isNaN(nacimiento.getTime()) || nacimiento.getFullYear() <= 1901) return "-";
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
+    return edad;
+}
+
+function previsionDeterminacionPaciente(id_prevision) {
+    if (id_prevision === 1) return "FONASA";
+    if (id_prevision === 2) return "ISAPRE";
+    if (id_prevision === 3) return "CONVENIO";
+    if (id_prevision === 4) return "SIN PREVISION";
+    return "SIN DEFINIR";
+}
 
 function estadosLetra_interpretacion(estado_backend){
     switch (estado_backend) {
         case 1:
-            return { etiqueta: "Activa", clases: "border-violet-200 bg-violet-50 text-violet-700" }
+            return { etiqueta: "Activa", clases: "bg-[#6E56CF] text-white" }
         case 2:
-            return { etiqueta: "Tratamiento en Curso", clases: "border-sky-200 bg-sky-50 text-sky-700" }
+            return { etiqueta: "Tratamiento en Curso", clases: "bg-sky-600 text-white" }
         case 3:
-            return { etiqueta: "Tratamiento Finalizado", clases: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+            return { etiqueta: "Tratamiento Finalizado", clases: "bg-emerald-600 text-white" }
         case 4:
-            return { etiqueta: "Tratamiento Abandonado", clases: "border-red-200 bg-red-50 text-red-700" }
+            return { etiqueta: "Tratamiento Abandonado", clases: "bg-red-600 text-white" }
         default:
-            return { etiqueta: "Sin estado", clases: "border-slate-200 bg-slate-50 text-slate-600" }
+            return { etiqueta: "Sin estado", clases: "bg-slate-500 text-white" }
     }
 }
 
@@ -433,7 +455,7 @@ function formatearFechaHora(fechaISO) {
                                 paciente?.map(paciente => {
                                     return (
                                         <h1 key={paciente.id_paciente} className="mt-1 text-3xl font-bold text-slate-900 md:text-4xl">
-                                            Cotizaciones de <span className="text-[#6E56CF]">{paciente.nombre}</span>
+                                            Cotizaciones de {paciente.nombre}
                                         </h1>
                                     )
                                 })
@@ -453,7 +475,7 @@ function formatearFechaHora(fechaISO) {
                         <button
                             type="button"
                             onClick={() => actualizarVisibilidadFormulario((actual) => !actual)}
-                            className="flex h-14 items-center gap-2 rounded-lg bg-[#6E56CF] px-5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#5b45bc]"
+                            className="flex h-14 items-center gap-2 rounded-lg bg-slate-900 px-5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-slate-800"
                         >
                             {mostrarFormularioCotizacion ? <X className="h-4 w-4"/> : <Plus className="h-4 w-4"/>}
                             {mostrarFormularioCotizacion ? "Cerrar" : "Nueva cotización"}
@@ -462,57 +484,74 @@ function formatearFechaHora(fechaISO) {
                 </header>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[290px_minmax(0,1fr)] xl:gap-8">
-                    <aside className="self-start overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:sticky lg:top-6">
-                        <div className="border-b border-slate-100 bg-slate-50/60 p-5">
-                            <div className="flex items-center gap-4">
-                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[#6E56CF] text-lg font-bold text-white shadow-sm">
-                                    CR
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="truncate text-[16px] font-bold text-slate-900">
-                                        {cotizacionesPaciente.nombre} {cotizacionesPaciente.apellido}
-                                    </p>
-                                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                        Paciente #{id_paciente || "MOCK"}
-                                    </p>
-                                </div>
+                    <aside className="self-start overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm lg:sticky lg:top-6">
+                        <div className="flex items-center gap-4 border-b border-slate-100 bg-slate-50/30 p-8">
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-[#6E56CF] text-xl font-bold text-white shadow-lg shadow-indigo-100">
+                                {paciente[0]?.nombre?.charAt(0) ?? ""}{paciente[0]?.apellido?.charAt(0) ?? ""}
+                            </div>
+                            <div className="min-w-0">
+                                <h2 className="truncate text-lg font-bold leading-tight text-slate-900">
+                                    {paciente[0]?.nombre} {paciente[0]?.apellido}
+                                </h2>
+                                <p className="mt-1 text-[12px] font-medium uppercase tracking-wider text-slate-400">
+                                    ID Paciente #{id_paciente}
+                                </p>
                             </div>
                         </div>
 
-                        {paciente.map((elemento, index) => {
-                            return (
-                            <div key={index} className="p-5">
-                                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                    Datos del paciente
-                                </p>
-                                <dl className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <UserRound className="h-4 w-4 shrink-0 text-[#6E56CF]"/>
-                                        <div>
-                                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RUT</dt>
-                                            <dd className="mt-0.5 font-mono text-[13px] font-semibold text-slate-700">{elemento.rut}</dd>
-                                        </div>
+                        {paciente.map((elemento, index) => (
+                            <div key={index} className="space-y-6 p-8">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nacimiento</span>
+                                        <p className="text-[13px] font-semibold text-slate-700">{formatearFecha(elemento.nacimiento) || "-"}</p>
                                     </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Edad</span>
+                                        <p className="text-[13px] font-semibold text-slate-700">{calcularEdadPaciente(elemento.nacimiento)} años</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Previsión</span>
+                                        <p className="text-[13px] font-semibold text-slate-700">{previsionDeterminacionPaciente(elemento.prevision_id)}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sexo</span>
+                                        <p className="text-[13px] font-semibold text-slate-700">{elemento.sexo || "-"}</p>
+                                    </div>
+                                </div>
 
-
+                                <div className="space-y-4 border-t border-slate-100 pt-4">
                                     <div className="flex items-center gap-3">
-                                        <Phone className="h-4 w-4 shrink-0 text-[#6E56CF]"/>
-                                        <div>
-                                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Teléfono</dt>
-                                            <dd className="mt-0.5 text-[13px] font-semibold text-slate-700">{elemento.telefono}</dd>
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
+                                            <UserRound className="h-4 w-4"/>
                                         </div>
+                                        <span className="font-mono text-[13px] text-slate-600">{elemento.rut || "No registrado"}</span>
                                     </div>
-                                    <div className="flex items-start gap-3">
-                                        <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#6E56CF]"/>
-                                        <div className="min-w-0">
-                                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Correo</dt>
-                                            <dd className="mt-0.5 break-all text-[13px] font-semibold text-slate-700">{elemento.correo}</dd>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
+                                            <Phone className="h-4 w-4"/>
                                         </div>
+                                        <span className="text-[13px] text-slate-600">{elemento.telefono || "No registrado"}</span>
                                     </div>
-                                </dl>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
+                                            <Mail className="h-4 w-4"/>
+                                        </div>
+                                        <span className="break-all text-[13px] text-slate-600">{elemento.correo || "No registrado"}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={volverACarpetaClinica}
+                                        className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 text-[13px] font-bold text-white transition-all hover:bg-slate-800"
+                                    >
+                                        Ver carpeta clínica
+                                    </button>
+                                </div>
                             </div>
-
-                            )})}
+                        ))}
                     </aside>
 
                     <main className="min-w-0 space-y-5">
@@ -634,8 +673,6 @@ function formatearFechaHora(fechaISO) {
                                         key={cotizacion.id_cotizacion_paciente}
                                         className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_12px_30px_rgba(79,70,229,0.09)]"
                                     >
-                                        <div className="h-1 bg-gradient-to-r from-[#6E56CF] via-violet-400 to-sky-400"/>
-
                                         <div className="p-5 sm:p-6">
                                             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                                                 <div className="flex min-w-0 items-start gap-4">
@@ -648,7 +685,7 @@ function formatearFechaHora(fechaISO) {
                                                             <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-slate-500">
                                                                 COT-{cotizacion.id_cotizacion_paciente}
                                                             </span>
-                                                            <span className={`rounded-md border px-2 py-1 text-[10px] font-bold ${estadoActual.clases}`}>
+                                                            <span className={`rounded-md px-2 py-1 text-[10px] font-bold ${estadoActual.clases}`}>
                                                                 <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current align-middle"/>
                                                                 {estadoActual.etiqueta}
                                                             </span>
@@ -662,7 +699,7 @@ function formatearFechaHora(fechaISO) {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex min-w-[190px] items-center gap-3 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white px-4 py-3 lg:justify-end">
+                                                <div className="flex min-w-[190px] items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 lg:justify-end">
                                                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#6E56CF] shadow-sm">
                                                         <CircleDollarSign className="h-4 w-4"/>
                                                     </div>

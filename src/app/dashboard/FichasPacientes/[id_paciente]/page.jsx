@@ -952,57 +952,63 @@ export default function Paciente() {
                     <div className="xl:col-span-8 space-y-8">
                         
                         {/* Acciones Rápidas */}
+                        <div>
+                        <div className="mb-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Accesos directos</p>
+                            <h3 className="text-lg font-bold text-slate-900">Acciones rápidas</h3>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                            <button onClick={() => nuevaFichaClinica(id_paciente)} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                            <button onClick={() => nuevaFichaClinica(id_paciente)} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                 <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-700">Nueva Ficha</span>
+                                <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Nueva Ficha</span>
                             </button>
-                            <button onClick={agendarPaciente} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                            <button onClick={agendarPaciente} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                 <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-700">Agendar Cita</span>
+                                <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Agendar Cita</span>
                             </button>
                             {canSeeOdontograma && (
-                                <button onClick={verOdontogramas} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                                <button onClick={verOdontogramas} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                     <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 9.75h4.5m-4.5 4.5h4.5M7.5 3.75h9A2.25 2.25 0 0118.75 6v12A2.25 2.25 0 0116.5 20.25h-9A2.25 2.25 0 015.25 18V6A2.25 2.25 0 017.5 3.75z" /></svg>
                                     </div>
-                                    <span className="text-[13px] font-bold text-slate-700">Odontograma</span>
+                                    <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Odontograma</span>
                                 </button>
                             )}
-                            <button onClick={verPresupuestoPaciente} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                            <button onClick={verPresupuestoPaciente} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                 <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l2 2 4-4m-8.5 8h11a2.5 2.5 0 002.5-2.5v-11A2.5 2.5 0 0017.5 4h-11A2.5 2.5 0 004 6.5v11A2.5 2.5 0 006.5 20zM8 8h8" />
                                     </svg>
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-700">Presupuesto Paciente</span>
+                                <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Presupuesto Paciente</span>
                             </button>
                             {canSeeOdontograma && (
-                                <button onClick={verPeriodontograma} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                                <button onClick={verPeriodontograma} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                     <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.5 12.75h9m-9 3h9M8.25 3.75h7.5A2.25 2.25 0 0118 6v12a2.25 2.25 0 01-2.25 2.25h-7.5A2.25 2.25 0 016 18V6a2.25 2.25 0 012.25-2.25zM9 7.5h.008v.008H9V7.5zm3 0h.008v.008H12V7.5zm3 0h.008v.008H15V7.5z" /></svg>
                                     </div>
-                                    <span className="text-[13px] font-bold text-slate-700">Periodontograma</span>
+                                    <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Periodontograma</span>
                                 </button>
                             )}
                             {canSeeRecetaMedica && (
-                                <button onClick={() => irAReceta(id_paciente)} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                                <button onClick={() => irAReceta(id_paciente)} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                     <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" /></svg>
                                     </div>
-                                    <span className="text-[13px] font-bold text-slate-700">Receta Médica</span>
+                                    <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Receta Médica</span>
                                 </button>
                             )}
-                            <button onClick={irADocumentos} className="h-28 bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col justify-between hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
+                            <button onClick={irADocumentos} className="min-h-[112px] bg-white border border-slate-200 rounded-[28px] p-6 flex flex-col items-start gap-3 hover:border-[#6E56CF] hover:shadow-lg hover:shadow-indigo-50/50 transition-all group text-left">
                                 <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center group-hover:bg-[#6E56CF] group-hover:text-white transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-700">Adjuntar Documentos</span>
+                                <span className="text-[13px] font-bold leading-snug text-slate-700 break-words">Adjuntar Documentos</span>
                             </button>
+                        </div>
                         </div>
 
                         {/* Formulario de Edición (Cerrable) */}
@@ -1101,33 +1107,40 @@ export default function Paciente() {
                                         const expandida = fichasExpandidas.has(ficha.id_ficha);
                                         return (
                                         <div key={ficha.id_ficha} className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
-                                            <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="h-10 w-10 rounded-xl bg-violet-50 text-[#6E56CF] flex items-center justify-center font-bold text-xs shadow-sm">
+                                            <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/30 space-y-4">
+                                                <div className="flex items-center gap-4 min-w-0">
+                                                    <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">
                                                         #{ficha.id_ficha}
                                                     </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                                            {parsearDatosDinamicos(ficha.datosDinamicos)?._plantillaNombre || ficha.tipoAtencion || "Consulta General"}
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h4 className="text-sm font-bold text-slate-800 truncate">
+                                                                {parsearDatosDinamicos(ficha.datosDinamicos)?._plantillaNombre || ficha.tipoAtencion || "Consulta General"}
+                                                            </h4>
                                                             {index === 0 && (
-                                                                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">Más reciente</span>
+                                                                <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-white bg-slate-900 rounded-full px-2 py-0.5">Más reciente</span>
                                                             )}
-                                                        </h4>
+                                                        </div>
                                                         <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Fecha: {formatearFecha(ficha.fechaConsulta)}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-9 px-3 rounded-xl bg-teal-50 text-teal-700 text-[11px] font-bold flex items-center border border-teal-100">
-                                                        Prof: {ficha.observaciones || "N/A"}
+                                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                                    <div
+                                                        title={`Prof: ${ficha.observaciones || "N/A"}`}
+                                                        className="h-9 max-w-[220px] px-3 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-bold flex items-center border border-slate-200"
+                                                    >
+                                                        <span className="truncate">Prof: {ficha.observaciones || "N/A"}</span>
                                                     </div>
-                                                    <button onClick={() => toggleFichaExpandida(ficha.id_ficha)} className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all">
-                                                        {expandida ? "Ocultar" : "Ver detalle"}
-                                                    </button>
-                                                    <button onClick={() => descargarFichaPDF(ficha)} className="h-9 px-4 rounded-xl bg-violet-50 border border-violet-100 text-[#6E56CF] text-[11px] font-bold hover:bg-violet-100 transition-all">PDF</button>
-                                                    <button onClick={() => editarFichaClinica(ficha.id_ficha)} className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all">Editar</button>
-                                                    <button onClick={() => eliminarFicha(ficha.id_ficha)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => toggleFichaExpandida(ficha.id_ficha)} className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all">
+                                                            {expandida ? "Ocultar" : "Ver detalle"}
+                                                        </button>
+                                                        <button onClick={() => descargarFichaPDF(ficha)} className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all">PDF</button>
+                                                        <button onClick={() => editarFichaClinica(ficha.id_ficha)} className="h-9 px-4 rounded-xl bg-slate-900 text-white text-[11px] font-bold hover:bg-slate-800 transition-all">Editar</button>
+                                                        <button onClick={() => eliminarFicha(ficha.id_ficha)} className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             {expandida && (

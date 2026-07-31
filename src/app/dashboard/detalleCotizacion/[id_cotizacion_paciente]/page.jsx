@@ -62,8 +62,8 @@ function BotonEnviarCotizacionCorreo({
     const claseEstado = envioConfirmado
         ? "bg-emerald-600 shadow-emerald-200 hover:bg-emerald-600"
         : procesando
-            ? "bg-[#5F46C5] shadow-violet-200"
-            : "bg-[#6E56CF] shadow-violet-200 hover:bg-[#5F46C5] active:scale-[0.98]";
+            ? "bg-slate-800 shadow-slate-300"
+            : "bg-slate-900 shadow-slate-300 hover:bg-slate-800 active:scale-[0.98]";
 
     return (
         <button
@@ -72,11 +72,11 @@ function BotonEnviarCotizacionCorreo({
             disabled={enviando}
             aria-busy={procesando}
             aria-live="polite"
-            className={`relative inline-flex h-11 w-full min-w-[205px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-5 text-xs font-bold text-white shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 disabled:cursor-wait disabled:active:scale-100 sm:w-auto ${claseEstado}`}
+            className={`relative inline-flex h-11 w-full min-w-[205px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-5 text-xs font-bold text-white shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-wait disabled:active:scale-100 sm:w-auto ${claseEstado}`}
         >
             {procesando ? (
                 <span
-                    className="absolute inset-0 bg-gradient-to-r from-violet-700/20 via-white/15 to-violet-700/20 motion-safe:animate-pulse"
+                    className="absolute inset-0 bg-white/10 motion-safe:animate-pulse"
                     aria-hidden="true"
                 />
             ) : null}
@@ -863,196 +863,228 @@ export default function DetalleCotizacion() {
         const documento = new jsPDF("p", "mm", "letter");
         const anchoPagina = documento.internal.pageSize.getWidth();
         const altoPagina = documento.internal.pageSize.getHeight();
-        const margen = 16;
-        const azulClinico = [24, 54, 78];
-        const turquesaClinico = [20, 132, 136];
-        const textoPrincipal = [31, 49, 64];
-        const textoSecundario = [91, 112, 126];
-        const fondoSuave = [244, 248, 249];
-        const borde = [205, 219, 224];
-        const nombreEmpresa = String(datosEmpresa.empresaNombre ?? "").trim();
-        const contactoPie = [
-            datosEmpresa.contactoTelefono ? `Tel. ${datosEmpresa.contactoTelefono}` : "",
-            datosEmpresa.contactoWhatsapp ? `WhatsApp ${datosEmpresa.contactoWhatsapp}` : "",
-            datosEmpresa.contactoEmail || ""
-        ].filter(Boolean).join("  ·  ");
-        const direccionPie = String(datosEmpresa.contactoDireccion ?? "").trim();
+        const margen = 20;
+        const rightX = anchoPagina - margen;
 
-        function dibujarPiePagina() {
-            const paginaActual = documento.internal.getCurrentPageInfo().pageNumber;
-            const posicionPie = altoPagina - 17;
+        // Paleta clínica estándar Agenda Clínica: solo negro, grises y blanco. Sin gradientes.
+        const BLACK = [15, 23, 42];
+        const DARK = [51, 65, 85];
+        const MID = [100, 116, 139];
+        const LIGHT = [148, 163, 184];
+        const BGLIGHT = [248, 250, 252];
+        const BGMID = [241, 245, 249];
+        const BORDE = [203, 213, 225];
 
-            documento.setDrawColor(...borde);
-            documento.setLineWidth(0.25);
-            documento.line(margen, posicionPie - 3, anchoPagina - margen, posicionPie - 3);
+        const nombreEmpresa = String(datosEmpresa.empresaNombre ?? "").trim() || "-";
+        const folio = `N° ${id_cotizacion_paciente}`;
+        const fechaEmisionTexto = fechaEmisionPDF
+            ? new Date(`${fechaEmisionPDF}T00:00:00`).toLocaleDateString("es-CL", {day: "2-digit", month: "long", year: "numeric"})
+            : "-";
+        const nombrePacienteTexto = `${cotizacionActual.nombre ?? ""} ${cotizacionActual.apellido ?? ""}`.trim() || "-";
+        const rutPacienteTexto = String(cotizacionActual.rut ?? "").trim();
+        const profesionalTexto = String(cotizacionActual.profesional_solicitante_nombre ?? "").trim() || "-";
+        const hayAbono = Number(abonoAplicado) > 0;
+
+        function dibujarEncabezado() {
+            documento.setFillColor(...BGLIGHT);
+            documento.rect(0, 0, anchoPagina, 32, "F");
+            documento.setDrawColor(...BORDE);
+            documento.setLineWidth(0.4);
+            documento.line(0, 32, anchoPagina, 32);
 
             documento.setFont("helvetica", "bold");
-            documento.setFontSize(7);
-            documento.setTextColor(...azulClinico);
-            documento.text(nombreEmpresa || "-", margen, posicionPie);
-            documento.text(`Página ${paginaActual}`, anchoPagina - margen, posicionPie, {align: "right"});
+            documento.setFontSize(16);
+            documento.setTextColor(...BLACK);
+            documento.text(nombreEmpresa.toUpperCase(), margen, 14);
+
+            documento.setFont("helvetica", "italic");
+            documento.setFontSize(7.5);
+            documento.setTextColor(...MID);
+            documento.text("AgendaClínica — Healthcare Information System", margen, 20);
 
             documento.setFont("helvetica", "normal");
-            documento.setFontSize(6.5);
-            documento.setTextColor(...textoSecundario);
-            documento.text(contactoPie || "-", margen, posicionPie + 4);
-            documento.text(direccionPie ? `Dirección: ${direccionPie}` : "-", margen, posicionPie + 8);
+            documento.setFontSize(7.5);
+            documento.text("Centro de Atención Clínica", margen, 25);
+
+            documento.setFillColor(...BGMID);
+            documento.roundedRect(rightX - 60, 6, 60, 20, 1, 1, "F");
+            documento.setFont("helvetica", "bold");
+            documento.setFontSize(8);
+            documento.setTextColor(...BLACK);
+            documento.text("COTIZACIÓN CLÍNICA", rightX - 30, 14, {align: "center"});
+            documento.setFont("helvetica", "normal");
+            documento.setFontSize(7);
+            documento.setTextColor(...MID);
+            documento.text(folio, rightX - 30, 20, {align: "center"});
         }
 
-        documento.setFillColor(...azulClinico);
-        documento.rect(0, 0, anchoPagina, 9, "F");
+        function dibujarPiePagina() {
+            const posicionPie = altoPagina - 12;
+            documento.setDrawColor(...BORDE);
+            documento.setLineWidth(0.3);
+            documento.line(margen, posicionPie - 4, rightX, posicionPie - 4);
+            documento.setFont("helvetica", "normal");
+            documento.setFontSize(6.5);
+            documento.setTextColor(...LIGHT);
+            documento.text(`Generado por AgendaClínica | ${nombreEmpresa}`, margen, posicionPie);
+            documento.text(`Folio ${folio}  ·  Emisión: ${fechaEmisionTexto}`, rightX, posicionPie, {align: "right"});
+        }
 
-        const lineasNombreEmpresa = documento.splitTextToSize(nombreEmpresa || "-", anchoPagina - 110);
-        documento.setFont("helvetica", "bold");
-        documento.setFontSize(16);
-        documento.setTextColor(...azulClinico);
-        documento.text(lineasNombreEmpresa, margen + 6, 21);
+        dibujarEncabezado();
 
-        const posicionSubtitulo = 21 + (lineasNombreEmpresa.length * 5.5);
-        documento.setFillColor(...turquesaClinico);
-        documento.roundedRect(margen, 16, 2.5, posicionSubtitulo - 13, 1, 1, "F");
-        documento.setFontSize(7.5);
-        documento.setTextColor(...turquesaClinico);
-        documento.text("COTIZACIÓN CLÍNICA", margen + 6, posicionSubtitulo);
-
-        documento.setFont("helvetica", "bold");
-        documento.setFontSize(10);
-        documento.setTextColor(...azulClinico);
-        documento.text(`#${id_cotizacion_paciente}`, anchoPagina - margen, 20, {align: "right"});
-
-        documento.setFont("helvetica", "normal");
-        documento.setFontSize(7);
-        documento.setTextColor(...textoSecundario);
-        documento.text(
-            `Emisión: ${formatearFechaDocumento(fechaEmisionPDF)}`,
-            anchoPagina - margen,
-            27,
-            {align: "right"}
-        );
-
-        const finEncabezado = Math.max(posicionSubtitulo + 4, 31);
-        documento.setDrawColor(...borde);
+        let y = 42;
+        documento.setFillColor(...BGMID);
+        documento.roundedRect(margen, y, rightX - margen, 26, 1, 1, "F");
+        documento.setDrawColor(...BORDE);
         documento.setLineWidth(0.3);
-        documento.line(margen, finEncabezado, anchoPagina - margen, finEncabezado);
+        documento.roundedRect(margen, y, rightX - margen, 26, 1, 1, "S");
 
-        const inicioPaciente = finEncabezado + 8;
-        documento.setFillColor(...fondoSuave);
-        documento.setDrawColor(...borde);
-        documento.roundedRect(margen, inicioPaciente, anchoPagina - (margen * 2), 40, 2, 2, "FD");
+        const midCol = margen + (rightX - margen) / 2;
+        documento.line(midCol, y + 2, midCol, y + 24);
 
         documento.setFont("helvetica", "bold");
-        documento.setFontSize(7);
-        documento.setTextColor(...turquesaClinico);
-        documento.text("INFORMACIÓN DEL PACIENTE", margen + 5, inicioPaciente + 7);
+        documento.setFontSize(6.5);
+        documento.setTextColor(...MID);
+        documento.text("PROFESIONAL RESPONSABLE", margen + 5, y + 8);
+        documento.setFont("helvetica", "normal");
+        documento.setFontSize(10);
+        documento.setTextColor(...BLACK);
+        documento.text(profesionalTexto, margen + 5, y + 14);
 
         documento.setFont("helvetica", "normal");
         documento.setFontSize(6.5);
-        documento.setTextColor(...textoSecundario);
-        documento.text("PACIENTE", margen + 5, inicioPaciente + 14);
-        documento.text("RUT", margen + 83, inicioPaciente + 14);
-        documento.text("TELÉFONO", margen + 130, inicioPaciente + 14);
-        documento.text("CORREO", margen + 5, inicioPaciente + 28);
-        documento.text("PROFESIONAL", margen + 83, inicioPaciente + 28);
-        documento.text("FECHA DE EMISIÓN", margen + 145, inicioPaciente + 28);
+        documento.setTextColor(...MID);
+        documento.text(`Cotización: ${String(cotizacionActual.nombre_cotizacion ?? "-").trim() || "-"}`, margen + 5, y + 20);
 
         documento.setFont("helvetica", "bold");
+        documento.setFontSize(6.5);
+        documento.setTextColor(...MID);
+        documento.text("PACIENTE", midCol + 5, y + 8);
+        documento.text("FECHA DE EMISIÓN", midCol + 5, y + 19);
+        documento.setFont("helvetica", "normal");
+        documento.setFontSize(9);
+        documento.setTextColor(...BLACK);
+        documento.text(nombrePacienteTexto + (rutPacienteTexto ? `  ·  ${rutPacienteTexto}` : ""), midCol + 5, y + 14);
         documento.setFontSize(8.5);
-        documento.setTextColor(...textoPrincipal);
-        documento.text(`${cotizacionActual.nombre ?? ""} ${cotizacionActual.apellido ?? ""}`.trim() || "-", margen + 5, inicioPaciente + 20);
-        documento.text(String(cotizacionActual.rut ?? "-"), margen + 83, inicioPaciente + 20);
-        documento.text(String(cotizacionActual.telefono ?? "-"), margen + 130, inicioPaciente + 20);
-        documento.text(String(cotizacionActual.correo ?? "-"), margen + 5, inicioPaciente + 34);
-        documento.text(
-            documento.splitTextToSize(String(cotizacionActual.profesional_solicitante_nombre ?? "-"), 55)[0],
-            margen + 83,
-            inicioPaciente + 34
-        );
-        documento.text(
-            formatearFechaDocumento(fechaEmisionPDF),
-            margen + 145,
-            inicioPaciente + 34
-        );
+        documento.text(fechaEmisionTexto, midCol + 5, y + 24);
 
-        const inicioDetalle = inicioPaciente + 51;
-        documento.setFont("helvetica", "bold");
-        documento.setFontSize(7.5);
-        documento.setTextColor(...azulClinico);
-        documento.text("DETALLE DE PRESTACIONES", margen, inicioDetalle - 4);
+        y += 32;
 
         autoTable(documento, {
-            startY: inicioDetalle,
-            margin: {left: margen, right: margen, bottom: 27},
-            head: [["Prestación o procedimiento", "Valor", "Observaciones"]],
-            body: detalleCotizacionArray.map((elemento) => [
+            head: [["#", "Servicio / Procedimiento", "Observación", "Valor (CLP)"]],
+            body: detalleCotizacionArray.map((elemento, index) => [
+                String(index + 1),
                 elemento.producto_servicio_cotizado,
-                formatearMonto(elemento.valor_producto_cotizado),
-                elemento.observacion_producto_cotizado || "-"
+                elemento.observacion_producto_cotizado?.trim() || "—",
+                formatearMonto(elemento.valor_producto_cotizado)
             ]),
-            theme: "grid",
-            styles: {
-                font: "helvetica",
-                fontSize: 8,
-                cellPadding: 3.4,
-                lineColor: borde,
-                lineWidth: 0.18,
-                textColor: textoPrincipal,
-                valign: "middle"
-            },
+            startY: y,
+            margin: {left: margen, right: margen, bottom: 26},
+            theme: "plain",
             headStyles: {
-                fillColor: azulClinico,
+                fillColor: DARK,
                 textColor: [255, 255, 255],
                 fontStyle: "bold",
-                fontSize: 7.5
+                fontSize: 7.5,
+                cellPadding: {top: 4, bottom: 4, left: 5, right: 5},
+                halign: "left"
+            },
+            columnStyles: {
+                0: {cellWidth: 10, halign: "center", textColor: MID},
+                1: {cellWidth: 76},
+                2: {cellWidth: "auto", textColor: DARK},
+                3: {cellWidth: 34, halign: "right", fontStyle: "bold"}
             },
             bodyStyles: {
-                fillColor: [255, 255, 255]
+                fontSize: 9,
+                cellPadding: {top: 3.5, bottom: 3.5, left: 5, right: 5},
+                textColor: BLACK
             },
-            alternateRowStyles: {fillColor: fondoSuave},
-            columnStyles: {
-                0: {cellWidth: 76},
-                1: {cellWidth: 30, halign: "right", fontStyle: "bold"},
-                2: {cellWidth: "auto"}
+            alternateRowStyles: {fillColor: BGLIGHT},
+            styles: {
+                lineWidth: 0.15,
+                lineColor: BORDE,
+                overflow: "linebreak"
             },
-            didDrawPage: dibujarPiePagina
+            didDrawPage: (data) => {
+                if (data.pageNumber > 1) dibujarEncabezado();
+                dibujarPiePagina();
+            }
         });
 
-        let posicionTotales = (documento.lastAutoTable?.finalY || 95) + 9;
-        if (posicionTotales > altoPagina - 45) {
+        let finalY = documento.lastAutoTable.finalY + 8;
+        const boxW = 76;
+        const boxAltura = hayAbono ? 30 : 22;
+        const boxX = rightX - boxW;
+
+        if (finalY + boxAltura > altoPagina - 55) {
             documento.addPage();
-            documento.setFillColor(...azulClinico);
-            documento.rect(0, 0, anchoPagina, 6, "F");
-            dibujarPiePagina();
-            posicionTotales = 24;
+            dibujarEncabezado();
+            finalY = 42;
         }
 
-        const anchoTotal = 76;
-        const inicioTotales = anchoPagina - margen - anchoTotal;
-        documento.setFillColor(...fondoSuave);
-        documento.setDrawColor(...borde);
-        documento.roundedRect(inicioTotales, posicionTotales, anchoTotal, 20, 2, 2, "FD");
-
-        documento.setFont("helvetica", "bold");
-        documento.setFontSize(7);
-        documento.setTextColor(...turquesaClinico);
-        documento.text("TOTAL COTIZACIÓN", inicioTotales + 5, posicionTotales + 7);
-
-        documento.setFontSize(14);
-        documento.setTextColor(...azulClinico);
-        documento.text(
-            formatearMonto(totalCotizacion),
-            anchoPagina - margen - 5,
-            posicionTotales + 15,
-            {align: "right"}
-        );
+        documento.setFillColor(...BGMID);
+        documento.roundedRect(boxX, finalY, boxW, boxAltura, 1, 1, "F");
+        documento.setDrawColor(...BORDE);
+        documento.setLineWidth(0.3);
+        documento.roundedRect(boxX, finalY, boxW, boxAltura, 1, 1, "S");
 
         documento.setFont("helvetica", "normal");
-        documento.setFontSize(6.5);
-        documento.setTextColor(...textoSecundario);
-        documento.text(
-            "Valores sujetos a confirmación clínica y disponibilidad.",
-            margen,
-            posicionTotales + 13
-        );
+        documento.setFontSize(8.5);
+        documento.setTextColor(...MID);
+        documento.text("Subtotal:", boxX + 5, finalY + 8);
+        documento.text(formatearMonto(totalCotizacion), rightX - 3, finalY + 8, {align: "right"});
+
+        let lineaTotalY = finalY + 11;
+        let totalLabelY = finalY + 19;
+
+        if (hayAbono) {
+            documento.text("Abono paciente:", boxX + 5, finalY + 15);
+            documento.text(`- ${formatearMonto(abonoAplicado)}`, rightX - 3, finalY + 15, {align: "right"});
+            lineaTotalY = finalY + 18;
+            totalLabelY = finalY + 26;
+        }
+
+        documento.setDrawColor(...BORDE);
+        documento.line(boxX + 3, lineaTotalY, rightX - 3, lineaTotalY);
+
+        documento.setFont("helvetica", "bold");
+        documento.setFontSize(11);
+        documento.setTextColor(...BLACK);
+        documento.text(hayAbono ? "Saldo Pendiente:" : "Total Neto:", boxX + 5, totalLabelY);
+        documento.text(formatearMonto(hayAbono ? saldoPendiente : totalCotizacion), rightX - 3, totalLabelY, {align: "right"});
+
+        finalY += boxAltura + 8;
+        documento.setFont("helvetica", "normal");
+        documento.setFontSize(7);
+        documento.setTextColor(...LIGHT);
+        documento.text("• Los valores indicados están expresados en pesos chilenos (CLP) e incluyen IVA según corresponda.", margen, finalY);
+        documento.text("• Esta cotización tiene vigencia de 30 días desde la fecha de emisión.", margen, finalY + 5);
+        documento.text("• Para consultas comuníquese con la clínica antes de iniciar cualquier tratamiento.", margen, finalY + 10);
+
+        finalY += 24;
+        if (finalY + 14 > altoPagina - 22) {
+            documento.addPage();
+            dibujarEncabezado();
+            finalY = 48;
+        }
+
+        const sigW = 65;
+        documento.setDrawColor(...BORDE);
+        documento.setLineWidth(0.3);
+        documento.line(margen, finalY, margen + sigW, finalY);
+        documento.setFont("helvetica", "normal");
+        documento.setFontSize(7);
+        documento.setTextColor(...MID);
+        documento.text("Firma y Timbre Profesional", margen + sigW / 2, finalY + 5, {align: "center"});
+        documento.setFontSize(6);
+        documento.text(nombreEmpresa, margen + sigW / 2, finalY + 9, {align: "center"});
+
+        documento.setFontSize(7);
+        documento.line(rightX - sigW, finalY, rightX, finalY);
+        documento.text("Firma Paciente / Representante", rightX - sigW / 2, finalY + 5, {align: "center"});
+
+        dibujarPiePagina();
 
         const nombrePacienteArchivo = `${cotizacionActual.nombre ?? ""}-${cotizacionActual.apellido ?? ""}`
             .toLowerCase()
@@ -1074,7 +1106,7 @@ export default function DetalleCotizacion() {
                             <button
                                 type="button"
                                 onClick={volverACarpetaPaciente}
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#6E56CF] px-4 text-xs font-bold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-[#5F46C5] hover:shadow-xl hover:shadow-violet-200 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2"
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-xs font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2"
                                 title="Volver a la carpeta del paciente"
                                 aria-label="Volver a la carpeta del paciente"
                             >
@@ -1084,7 +1116,7 @@ export default function DetalleCotizacion() {
                             <button
                                 type="button"
                                 onClick={volverACotizaciones}
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-4 text-xs font-bold text-[#6E56CF] shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2"
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-xs font-bold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2"
                                 title="Volver a cotizaciones"
                                 aria-label="Volver a cotizaciones"
                             >
@@ -1097,7 +1129,7 @@ export default function DetalleCotizacion() {
                                 Presupuesto del paciente
                             </p>
                             <h1 className="mt-1 text-3xl font-bold text-slate-900 md:text-4xl">
-                                Detalle de cotización <span className="text-[#6E56CF]">#{id_cotizacion_paciente}</span>
+                                Detalle de cotización #{id_cotizacion_paciente}
                             </h1>
                             <p className="mt-2 max-w-2xl text-[13px] text-slate-500">
                                 Selecciona productos y servicios para construir el detalle económico del tratamiento.
@@ -1151,44 +1183,42 @@ export default function DetalleCotizacion() {
                     </div>
                 </header>
 
-                <section className="mb-6 rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                            <UserRound className="h-3.5 w-3.5 text-[#6E56CF]"/>
-                            <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Datos del paciente</h2>
+                <section className="mb-6 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-4 border-b border-slate-100 bg-slate-50/30 p-8">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-[#6E56CF] text-xl font-bold text-white shadow-lg shadow-indigo-100">
+                            {cotizacionActual?.nombre?.charAt(0) ?? ""}{cotizacionActual?.apellido?.charAt(0) ?? ""}
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-400">
-                            Paciente #{cotizacionActual?.id_paciente ?? "-"}
-                        </span>
+                        <div className="min-w-0">
+                            <h2 className="truncate text-lg font-bold leading-tight text-slate-900">
+                                {cotizacionActual?.nombre} {cotizacionActual?.apellido}
+                            </h2>
+                            <p className="mt-1 text-[12px] font-medium uppercase tracking-wider text-slate-400">
+                                ID Paciente #{cotizacionActual?.id_paciente ?? "-"}
+                            </p>
+                        </div>
                     </div>
 
                     {cotizacionSeleccionada.map((cotizacion) => (
-                        <dl key={cotizacion.id_cotizacion_paciente} className="grid grid-cols-1 gap-x-6 gap-y-3 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <div className="min-w-0">
-                                <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Nombre</dt>
-                                <dd className="mt-1 break-words text-[11px] font-semibold leading-snug text-slate-800" title={cotizacion.nombre}>
-                                    {cotizacion.nombre + ` ` + cotizacion.apellido}
-                                </dd>
+                        <dl key={cotizacion.id_cotizacion_paciente} className="grid grid-cols-1 gap-x-8 gap-y-6 p-8 sm:grid-cols-2 lg:grid-cols-3">
+                            <div className="min-w-0 space-y-1">
+                                <dt className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RUT</dt>
+                                <dd className="break-words font-mono text-[13px] font-semibold text-slate-700" title={cotizacion.rut}>{cotizacion.rut}</dd>
                             </div>
-                            <div className="min-w-0">
-                                <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">RUT</dt>
-                                <dd className="mt-1 break-words font-mono text-[11px] font-semibold leading-snug text-slate-700" title={cotizacion.rut}>{cotizacion.rut}</dd>
+                            <div className="min-w-0 space-y-1">
+                                <dt className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Teléfono</dt>
+                                <dd className="break-words text-[13px] font-semibold text-slate-700" title={cotizacion.telefono}>{cotizacion.telefono}</dd>
                             </div>
-                            <div className="min-w-0">
-                                <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Teléfono</dt>
-                                <dd className="mt-1 break-words text-[11px] font-semibold leading-snug text-slate-700" title={cotizacion.telefono}>{cotizacion.telefono}</dd>
+                            <div className="min-w-0 space-y-1">
+                                <dt className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Correo</dt>
+                                <dd className="break-words text-[13px] font-semibold text-slate-700" title={cotizacion.correo}>{cotizacion.correo}</dd>
                             </div>
-                            <div className="min-w-0">
-                                <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Correo</dt>
-                                <dd className="mt-1 break-words text-[11px] font-semibold leading-snug text-slate-700" title={cotizacion.correo}>{cotizacion.correo}</dd>
+                            <div className="min-w-0 space-y-1">
+                                <dt className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cotización</dt>
+                                <dd className="break-words text-[13px] font-semibold text-slate-700" title={cotizacion.nombre_cotizacion}>{cotizacion.nombre_cotizacion}</dd>
                             </div>
-                            <div className="min-w-0">
-                                <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Cotización</dt>
-                                <dd className="mt-1 break-words text-[11px] font-semibold leading-snug text-slate-700" title={cotizacion.nombre_cotizacion}>{cotizacion.nombre_cotizacion}</dd>
-                            </div>
-                            <div className="min-w-0">
-                                <dt className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Profesional</dt>
-                                <dd className="mt-1 break-words text-[11px] font-semibold leading-snug text-slate-700" title={cotizacion.profesional_solicitante_nombre}>{cotizacion.profesional_solicitante_nombre}</dd>
+                            <div className="min-w-0 space-y-1">
+                                <dt className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Profesional</dt>
+                                <dd className="break-words text-[13px] font-semibold text-slate-700" title={cotizacion.profesional_solicitante_nombre}>{cotizacion.profesional_solicitante_nombre}</dd>
                             </div>
                         </dl>
                     ))}
@@ -1214,7 +1244,7 @@ export default function DetalleCotizacion() {
                         <button
                             onClick={() => actualizarObservacion(observacionesDetalle, id_cotizacion_paciente)}
                             type="button"
-                            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#6E56CF] px-5 text-xs font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-[#5F46C5] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 sm:w-auto"
+                            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 sm:w-auto"
                         >
                             <Save className="h-4 w-4" aria-hidden="true"/>
                             Guardar observación
